@@ -1,0 +1,224 @@
+{
+  "meta": {
+    "project": "Educational Programming Courses Platform",
+    "date": "2025-12-05",
+    "prepared_by": "Software Development Manager"
+  },
+  "product_overview": "A comprehensive educational platform focused on programming courses, enabling interactive learning, secure communication, and effective course management for students, teachers, and administrators.",
+  "core_goals": [
+    "Provide a secure, user-friendly environment for learning programming via structured courses and interactive exercises.",
+    "Enable seamless and secure communication between students and teachers through real-time encrypted chat.",
+    "Support robust course management and content creation tools for teachers.",
+    "Offer administrative capabilities for managing users, courses, and system settings.",
+    "Implement gamification features like streaks and achievements to motivate continuous learning.",
+    "Include comprehensive user profile management and personalized settings.",
+    "Ensure high code execution reliability across multiple programming languages for practice and submissions."
+  ],
+  "key_features": [
+    "User Authentication with JWT, OAuth (Google, GitHub, VK), and Two-Factor Authentication (2FA).",
+    "End-to-End Encrypted real-time chat system between students and teachers.",
+    "Student Dashboard displaying courses, challenges, solutions, ratings, chat access, and profile management.",
+    "Interactive Learning Platform with lessons, quizzes, practice exercises, and progress tracking.",
+    "Teacher Panel for managing courses, students, submissions, and real-time communication.",
+    "Administrative Panel for overseeing users, courses, and system configurations.",
+    "Multi-language Code Execution and linting service integrated into the platform.",
+    "Course Management capabilities including creation, editing, structuring, and enrollment management.",
+    "Submission system to handle code submissions with grading and feedback.",
+    "Gamification elements such as daily streaks, achievements, gems, and streak freezes to engage learners.",
+    "User Profile and Settings management with avatar uploads, theme preferences, notifications, and security settings.",
+    "File Uploads support for course materials and chat attachments.",
+    "Public marketing and informational pages including Home, About, Reviews, Corporate, Blog, and FAQ."
+  ],
+  "user_flow_summary": [
+    "Users register or log in using email/password or OAuth providers, optionally setting up 2FA.",
+    "Students browse and enroll in courses, access lessons, quizzes, and submit code challenges.",
+    "Teachers create and edit course content, review student submissions, and engage via chat.",
+    "Real-time encrypted chat enables communication between students and teachers.",
+    "Admins manage user roles, courses, and platform settings through an administrative interface.",
+    "Students and teachers monitor progress and achievements on personalized dashboards.",
+    "Users customize their profiles and notification settings.",
+    "Code submissions are executed and validated with immediate feedback via the platform's runner service."
+  ],
+  "validation_criteria": [
+    "Successful user authentication including OAuth and 2FA flows.",
+    "End-to-end encryption verified for chat messages with no data leaks.",
+    "Functional course enrollment, content access, and progress tracking for students.",
+    "Effective creation and editing of course material by teachers.",
+    "Real-time chat operational with message delivery and encryption.",
+    "Administrative controls reliably manage users and courses.",
+    "Code execution engine supports all targeted programming languages with correct output.",
+    "File uploads for chat and course materials work without data loss or corruption.",
+    "Gamification statistics and rewards accurately track user activity.",
+    "Users can update profiles, preferences, and settings persistently.",
+    "Website public pages display correct marketing content and FAQ entries."
+  ],
+  "code_summary": {
+    "tech_stack": [
+      "TypeScript",
+      "JavaScript",
+      "React",
+      "Vite",
+      "Tailwind CSS",
+      "Node.js",
+      "Express.js",
+      "SQLite",
+      "WebSocket",
+      "JWT",
+      "OAuth",
+      "Monaco Editor",
+      "Prism.js"
+    ],
+    "features": [
+      {
+        "name": "Authentication System",
+        "description": "User authentication with JWT, OAuth (Google, GitHub, VK), and 2FA support",
+        "files": [
+          "src/contexts/AuthContext.tsx",
+          "src/pages/LoginPage.tsx",
+          "src/pages/RegisterPage.tsx",
+          "src/pages/OAuthCallbackPage.tsx",
+          "src/components/ProtectedRoute.tsx",
+          "server/src/routes/auth.js",
+          "server/src/routes/oauth.js",
+          "server/src/middleware/auth.js"
+        ]
+      },
+      {
+        "name": "End-to-End Encryption (E2EE)",
+        "description": "RSA-OAEP encryption for secure messaging between users",
+        "files": [
+          "src/utils/e2ee.ts",
+          "src/pages/DashboardPage.tsx",
+          "src/pages/TeacherPage.tsx",
+          "src/components/Chat.tsx",
+          "server/src/routes/chat.js"
+        ]
+      },
+      {
+        "name": "Dashboard",
+        "description": "Student dashboard with courses, challenges, solutions, rating, chat, and profile management",
+        "files": [
+          "src/pages/DashboardPage.tsx",
+          "src/components/StreakWidget.tsx"
+        ]
+      },
+      {
+        "name": "Learning Platform",
+        "description": "Interactive learning with lessons, quizzes, practice exercises, progress tracking, and discussions",
+        "files": [
+          "src/pages/LearnPage.tsx",
+          "src/pages/CoursePage.tsx",
+          "src/pages/CourseCatalogPage.tsx"
+        ]
+      },
+      {
+        "name": "Teacher Panel",
+        "description": "Teacher interface for managing courses, students, submissions, and chat",
+        "files": [
+          "src/pages/TeacherPage.tsx",
+          "src/pages/CourseEditorPage.tsx",
+          "server/src/routes/teacher.js"
+        ]
+      },
+      {
+        "name": "Admin Panel",
+        "description": "Administrative interface for managing users, courses, and system settings",
+        "files": [
+          "src/pages/AdminPage.tsx",
+          "server/src/routes/admin.js"
+        ]
+      },
+      {
+        "name": "Code Execution",
+        "description": "Code runner service for executing and linting code in multiple languages",
+        "files": [
+          "src/api/codeRunner.ts",
+          "server/src/services/codeRunner.js",
+          "server/src/services/languageServer.js",
+          "server/src/services/lspClient.js"
+        ]
+      },
+      {
+        "name": "Chat System",
+        "description": "Real-time encrypted chat between students and teachers with WebSocket",
+        "files": [
+          "src/components/Chat.tsx",
+          "src/pages/DashboardPage.tsx",
+          "src/pages/TeacherPage.tsx",
+          "server/src/routes/chat.js",
+          "server/src/services/websocket.js"
+        ]
+      },
+      {
+        "name": "User Profile & Settings",
+        "description": "User profile management with avatar, 2FA, theme preferences, and notifications",
+        "files": [
+          "src/pages/SettingsPage.tsx",
+          "src/pages/NotificationsPage.tsx",
+          "server/src/routes/user.js"
+        ]
+      },
+      {
+        "name": "Streak & Achievements",
+        "description": "Gamification system with day streaks, gems, achievements, and streak freezes",
+        "files": [
+          "src/components/StreakWidget.tsx",
+          "server/src/routes/user.js"
+        ]
+      },
+      {
+        "name": "Course Management",
+        "description": "Course creation, editing, structure management, and enrollment",
+        "files": [
+          "src/pages/CourseEditorPage.tsx",
+          "server/src/routes/courses.js"
+        ]
+      },
+      {
+        "name": "Submissions System",
+        "description": "Code submission handling, grading, and feedback",
+        "files": [
+          "server/src/routes/submissions.js"
+        ]
+      },
+      {
+        "name": "Public Pages",
+        "description": "Marketing and informational pages (Home, About, Reviews, Corporate, Blog, FAQ)",
+        "files": [
+          "src/pages/HomePage.tsx",
+          "src/pages/AboutPage.tsx",
+          "src/pages/ReviewsPage.tsx",
+          "src/pages/CorporatePage.tsx",
+          "src/pages/BlogPage.tsx",
+          "src/pages/FAQPage.tsx"
+        ]
+      },
+      {
+        "name": "UI Components",
+        "description": "Reusable UI components including Header, Footer, Toast notifications",
+        "files": [
+          "src/components/Header.tsx",
+          "src/components/Footer.tsx",
+          "src/components/Toast.tsx"
+        ]
+      },
+      {
+        "name": "Database",
+        "description": "SQLite database with migrations, schema, and seed data",
+        "files": [
+          "server/src/db/database.js",
+          "server/src/db/schema.js",
+          "server/src/db/migrations.js",
+          "server/src/db/seed.js"
+        ]
+      },
+      {
+        "name": "File Upload",
+        "description": "File upload handling for chat attachments and course materials",
+        "files": [
+          "server/src/routes/upload.js"
+        ]
+      }
+    ]
+  }
+}

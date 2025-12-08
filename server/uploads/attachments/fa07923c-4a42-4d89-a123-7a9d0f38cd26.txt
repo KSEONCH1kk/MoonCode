@@ -1,0 +1,14 @@
+[2025.12.04 18:58:45] Launched version: 6002004, install beta: [FALSE], alpha: 0, debug mode: [FALSE]
+[2025.12.04 18:58:45] Executable dir: C:/Users/KSEONYT/Downloads/, name: AyuGram.exe
+[2025.12.04 18:58:45] Initial working dir: C:/WINDOWS/system32/
+[2025.12.04 18:58:45] Working dir: C:/Users/KSEONYT/Downloads/
+[2025.12.04 18:58:45] Command line: C:\Users\KSEONYT\Downloads\AyuGram.exe -- tg://resolve/?domain=simplecdz_bot&start=s_site-task-80888e0c-8b83-4fb5-a017-d72b99d0559f
+[2025.12.04 18:58:45] Executable path before check: C:/Users/KSEONYT/Downloads/AyuGram.exe
+[2025.12.04 18:58:45] Logs started
+[2025.12.04 18:58:45] WinRT Supported: [TRUE]
+[2025.12.04 18:58:45] AppUserModelID: AyuGram.AyuGramDesktop.0a252103a2759e15f268cd5e8ba96888
+[2025.12.04 18:58:45] Using DirectX compiler 'C:\WINDOWS\SYSTEM32\d3dcompiler_47.dll'.
+[2025.12.04 18:58:45] Connecting local socket to Global\0852ee5e3c300ac53be1a81e5d65194e-{87A94AB0-E370-4cde-98D3-ACC110C59666}...
+[2025.12.04 18:58:45] Socket connected, this is not the first application instance, sending show command...
+[2025.12.04 18:58:45] Show command written, waiting response...
+[2025.12.04 18:58:45] Show command response received, processId = 47448, windowId = 19272872, activating and quitting...

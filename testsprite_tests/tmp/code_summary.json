@@ -1,0 +1,439 @@
+{
+  "tech_stack": [
+    "Node.js",
+    "Express.js",
+    "SQLite (better-sqlite3)",
+    "JWT (jsonwebtoken)",
+    "bcrypt",
+    "WebSocket (ws)",
+    "speakeasy (2FA)",
+    "multer (file upload)",
+    "qrcode"
+  ],
+  "features": [
+    {
+      "name": "Authentication API",
+      "description": "User registration, login with 2FA support, and profile management",
+      "files": ["server/src/routes/auth.js", "server/src/middleware/auth.js"],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "Authentication API",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/api/auth/register": {
+            "post": {
+              "summary": "Register new user",
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "required": ["email", "password", "name"],
+                      "properties": {
+                        "email": {"type": "string", "format": "email"},
+                        "password": {"type": "string"},
+                        "name": {"type": "string"}
+                      }
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "201": {"description": "User created"},
+                "400": {"description": "Validation error"}
+              }
+            }
+          },
+          "/api/auth/login": {
+            "post": {
+              "summary": "Login user",
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "required": ["email", "password"],
+                      "properties": {
+                        "email": {"type": "string"},
+                        "password": {"type": "string"},
+                        "twoFactorToken": {"type": "string"}
+                      }
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {"description": "Login successful"},
+                "401": {"description": "Invalid credentials"}
+              }
+            }
+          },
+          "/api/auth/me": {
+            "get": {
+              "summary": "Get current user",
+              "security": [{"bearerAuth": []}],
+              "responses": {
+                "200": {"description": "User data"}
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "User Profile API",
+      "description": "User profile management, password change, 2FA setup, theme preferences, notifications, streak and achievements",
+      "files": ["server/src/routes/user.js"],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "paths": {
+          "/api/user/profile": {
+            "get": {
+              "summary": "Get user profile",
+              "security": [{"bearerAuth": []}],
+              "responses": {"200": {"description": "Profile data"}}
+            },
+            "put": {
+              "summary": "Update user profile",
+              "security": [{"bearerAuth": []}],
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "name": {"type": "string"},
+                        "email": {"type": "string"},
+                        "avatar": {"type": "string"},
+                        "bio": {"type": "string"},
+                        "github": {"type": "string"},
+                        "telegram": {"type": "string"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/user/password": {
+            "put": {
+              "summary": "Change password",
+              "security": [{"bearerAuth": []}],
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "required": ["current_password", "new_password"],
+                      "properties": {
+                        "current_password": {"type": "string"},
+                        "new_password": {"type": "string"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/user/2fa/status": {
+            "get": {
+              "summary": "Get 2FA status",
+              "security": [{"bearerAuth": []}]
+            }
+          },
+          "/api/user/2fa/setup": {
+            "post": {
+              "summary": "Setup 2FA",
+              "security": [{"bearerAuth": []}]
+            }
+          },
+          "/api/user/2fa/verify": {
+            "post": {
+              "summary": "Verify 2FA code",
+              "security": [{"bearerAuth": []}]
+            }
+          },
+          "/api/user/theme": {
+            "put": {
+              "summary": "Update theme preference",
+              "security": [{"bearerAuth": []}]
+            }
+          },
+          "/api/user/notifications": {
+            "get": {
+              "summary": "Get user notifications",
+              "security": [{"bearerAuth": []}]
+            }
+          },
+          "/api/user/streak": {
+            "get": {
+              "summary": "Get user streak data",
+              "security": [{"bearerAuth": []}]
+            }
+          },
+          "/api/user/activity": {
+            "post": {
+              "summary": "Record user activity",
+              "security": [{"bearerAuth": []}]
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Courses API",
+      "description": "Course listing, details, enrollment, lessons, and progress tracking",
+      "files": ["server/src/routes/courses.js"],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "paths": {
+          "/api/courses/meta": {
+            "get": {
+              "summary": "Get course categories and tags"
+            }
+          },
+          "/api/courses": {
+            "get": {
+              "summary": "Get all courses",
+              "parameters": [
+                {"name": "category", "in": "query", "schema": {"type": "string"}},
+                {"name": "level", "in": "query", "schema": {"type": "string"}},
+                {"name": "search", "in": "query", "schema": {"type": "string"}},
+                {"name": "page", "in": "query", "schema": {"type": "integer"}},
+                {"name": "limit", "in": "query", "schema": {"type": "integer"}}
+              ]
+            }
+          },
+          "/api/courses/lessons/:lessonId": {
+            "get": {
+              "summary": "Get lesson by ID",
+              "security": [{"bearerAuth": []}]
+            }
+          },
+          "/api/courses/:slug": {
+            "get": {
+              "summary": "Get course by slug"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Chat API",
+      "description": "End-to-end encrypted messaging, chat management, and public key exchange",
+      "files": ["server/src/routes/chat.js", "server/src/services/websocket.js"],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "paths": {
+          "/api/chat": {
+            "get": {
+              "summary": "Get user chats",
+              "security": [{"bearerAuth": []}]
+            }
+          },
+          "/api/chat/direct": {
+            "post": {
+              "summary": "Create or get direct chat",
+              "security": [{"bearerAuth": []}]
+            }
+          },
+          "/api/chat/keys": {
+            "post": {
+              "summary": "Save public and private keys",
+              "security": [{"bearerAuth": []}]
+            },
+            "get": {
+              "summary": "Get my keys",
+              "security": [{"bearerAuth": []}]
+            }
+          },
+          "/api/chat/keys/:userId": {
+            "get": {
+              "summary": "Get user public key",
+              "security": [{"bearerAuth": []}]
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Submissions API",
+      "description": "Code submission, execution, and grading",
+      "files": ["server/src/routes/submissions.js", "server/src/services/codeRunner.js"],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "paths": {
+          "/api/submissions": {
+            "post": {
+              "summary": "Submit code",
+              "security": [{"bearerAuth": []}]
+            },
+            "get": {
+              "summary": "Get submissions",
+              "security": [{"bearerAuth": []}]
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Teacher API",
+      "description": "Teacher dashboard, course management, student management",
+      "files": ["server/src/routes/teacher.js"],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "paths": {
+          "/api/teacher/stats": {
+            "get": {
+              "summary": "Get teacher stats",
+              "security": [{"bearerAuth": []}]
+            }
+          },
+          "/api/teacher/courses": {
+            "get": {
+              "summary": "Get teacher courses",
+              "security": [{"bearerAuth": []}]
+            }
+          },
+          "/api/teacher/students": {
+            "get": {
+              "summary": "Get teacher students",
+              "security": [{"bearerAuth": []}]
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Admin API",
+      "description": "Admin dashboard, user management, course moderation",
+      "files": ["server/src/routes/admin.js"],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "paths": {
+          "/api/admin/stats": {
+            "get": {
+              "summary": "Get admin stats",
+              "security": [{"bearerAuth": []}]
+            }
+          },
+          "/api/admin/users": {
+            "get": {
+              "summary": "Get all users",
+              "security": [{"bearerAuth": []}]
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Upload API",
+      "description": "File upload for chat attachments, avatars, and course materials",
+      "files": ["server/src/routes/upload.js"],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "paths": {
+          "/api/upload": {
+            "post": {
+              "summary": "Upload file",
+              "security": [{"bearerAuth": []}],
+              "requestBody": {
+                "content": {
+                  "multipart/form-data": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "file": {"type": "string", "format": "binary"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Code Execution API",
+      "description": "Execute code in multiple languages, lint code",
+      "files": ["server/src/index.js", "server/src/services/codeRunner.js"],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "paths": {
+          "/api/execute": {
+            "post": {
+              "summary": "Execute code",
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "required": ["code", "language"],
+                      "properties": {
+                        "code": {"type": "string"},
+                        "language": {"type": "string"},
+                        "input": {"type": "string"},
+                        "testCases": {"type": "array"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/lint": {
+            "post": {
+              "summary": "Lint code",
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "required": ["code", "language"],
+                      "properties": {
+                        "code": {"type": "string"},
+                        "language": {"type": "string"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/languages": {
+            "get": {
+              "summary": "Get supported languages"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Health Check",
+      "description": "Server health check endpoint",
+      "files": ["server/src/index.js"],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "paths": {
+          "/health": {
+            "get": {
+              "summary": "Health check",
+              "responses": {
+                "200": {"description": "Server is healthy"}
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
+

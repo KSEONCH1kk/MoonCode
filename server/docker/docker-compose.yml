@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  code-sandbox:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: code-sandbox:latest
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    # Network isolation
+    network_mode: none
+    # Read-only root filesystem (except /app)
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app
+    # Capabilities drop
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    # Prevent privilege escalation
+    security_opt:
+      - no-new-privileges:true
+
