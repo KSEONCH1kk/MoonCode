@@ -316,10 +316,89 @@ code[class*="language-"] {
   }
 }
 
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
 .animate-fade-in {
   animation: fade-in 0.2s ease-out;
 }
 
 .animate-modal-in {
   animation: modal-in 0.3s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* Safe area for mobile devices */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Mobile touch improvements */
+@media (max-width: 768px) {
+  button, a {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  textarea, input {
+    font-size: 16px !important; /* Prevent zoom on iOS */
+  }
+}
+
+/* Prose content overflow handling */
+.prose {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.prose pre {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.prose img {
+  max-width: 100%;
+  height: auto;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+/* Code block mobile scrolling */
+.code-block-container {
+  max-width: 100%;
+}
+
+.code-block-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 640px) {
+  .prose {
+    font-size: 0.9375rem;
+    line-height: 1.7;
+  }
+  
+  .prose h1 {
+    font-size: 1.5rem;
+  }
+  
+  .prose h2 {
+    font-size: 1.25rem;
+  }
+  
+  .prose h3 {
+    font-size: 1.125rem;
+  }
 }

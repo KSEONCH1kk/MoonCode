@@ -206,15 +206,15 @@ export default function ChatPage({ backLink = '/dashboard' }: ChatPageProps) {
   }
 
   return (
-    <div className="flex h-screen bg-white">
-      {/* Chat List */}
-      <div className="w-80 border-r flex flex-col">
-        <div className="p-4 border-b">
-          <Link to={backLink} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4">
+    <div className="flex h-screen bg-white dark:bg-gray-900">
+      {/* Chat List - hidden on mobile when chat is open */}
+      <div className={`${chatId ? 'hidden md:flex' : 'flex'} w-full md:w-80 border-r dark:border-gray-700 flex-col`}>
+        <div className="p-4 border-b dark:border-gray-700">
+          <Link to={backLink} className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-4">
             <ArrowLeft className="w-5 h-5" />
             Назад
           </Link>
-          <h2 className="text-lg font-semibold">Сообщения</h2>
+          <h2 className="text-lg font-semibold dark:text-white">Сообщения</h2>
         </div>
 
         <div className="flex-1 overflow-y-auto">
@@ -225,8 +225,8 @@ export default function ChatPage({ backLink = '/dashboard' }: ChatPageProps) {
               <Link
                 key={chat.id}
                 to={`${backLink}/chat/${chat.id}`}
-                className={`flex items-center gap-3 p-4 hover:bg-gray-50 border-b ${
-                  isActive ? 'bg-blue-50' : ''
+                className={`flex items-center gap-3 p-4 hover:bg-gray-50 dark:hover:bg-gray-800 border-b dark:border-gray-700 ${
+                  isActive ? 'bg-blue-50 dark:bg-blue-900/30' : ''
                 }`}
               >
                 <div className="relative">
@@ -238,8 +238,8 @@ export default function ChatPage({ backLink = '/dashboard' }: ChatPageProps) {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium truncate">{other?.name}</div>
-                  <div className="text-sm text-gray-500 truncate">{chat.last_message}</div>
+                  <div className="font-medium truncate dark:text-white">{other?.name}</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400 truncate">{chat.last_message}</div>
                 </div>
               </Link>
             )
@@ -247,25 +247,29 @@ export default function ChatPage({ backLink = '/dashboard' }: ChatPageProps) {
         </div>
       </div>
 
-      {/* Chat Messages */}
+      {/* Chat Messages - full width on mobile */}
       {chatId && activeChat ? (
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col w-full">
           {/* Chat Header */}
-          <div className="p-4 border-b flex items-center gap-4">
+          <div className="p-3 md:p-4 border-b dark:border-gray-700 flex items-center gap-3 md:gap-4">
+            {/* Back button for mobile */}
+            <Link to={backLink} className="md:hidden p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
+              <ArrowLeft className="w-5 h-5 text-gray-500" />
+            </Link>
             <img 
               src={getOtherParticipant(activeChat)?.avatar} 
               alt="" 
               className="w-10 h-10 rounded-full" 
             />
-            <div className="flex-1">
-              <div className="font-medium">
+            <div className="flex-1 min-w-0">
+              <div className="font-medium dark:text-white truncate">
                 {getOtherParticipant(activeChat)?.name}
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
                 {getOtherParticipant(activeChat)?.role === 'teacher' ? 'Преподаватель' : 'Студент'}
               </div>
             </div>
-            <button className="p-2 hover:bg-gray-100 rounded-full">
+            <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
               <MoreVertical className="w-5 h-5 text-gray-500" />
             </button>
           </div>
@@ -354,7 +358,7 @@ export default function ChatPage({ backLink = '/dashboard' }: ChatPageProps) {
 
           {/* File Preview */}
           {selectedFile && (
-            <div className="px-4 py-2 border-t bg-gray-50 flex items-center gap-3">
+            <div className="px-3 md:px-4 py-2 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center gap-3">
               <div className="flex-1 flex items-center gap-2">
                 {selectedFile.type.startsWith('image/') ? (
                   <img 
@@ -366,21 +370,21 @@ export default function ChatPage({ backLink = '/dashboard' }: ChatPageProps) {
                   <FileText className="w-8 h-8 text-gray-400" />
                 )}
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">{selectedFile.name}</div>
-                  <div className="text-xs text-gray-500">{formatFileSize(selectedFile.size)}</div>
+                  <div className="text-sm font-medium truncate dark:text-white">{selectedFile.name}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{formatFileSize(selectedFile.size)}</div>
                 </div>
               </div>
               <button
                 onClick={() => setSelectedFile(null)}
-                className="p-1 hover:bg-gray-200 rounded"
+                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4 text-gray-500" />
               </button>
             </div>
           )}
 
           {/* Input */}
-          <div className="p-4 border-t">
+          <div className="p-3 md:p-4 border-t dark:border-gray-700 safe-area-bottom">
             <div className="flex items-center gap-2">
               <input
                 ref={fileInputRef}
@@ -391,27 +395,27 @@ export default function ChatPage({ backLink = '/dashboard' }: ChatPageProps) {
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="p-2 hover:bg-gray-100 rounded-full"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full shrink-0"
                 title="Прикрепить файл"
               >
                 <Paperclip className="w-5 h-5 text-gray-500" />
               </button>
-              <button className="p-2 hover:bg-gray-100 rounded-full">
+              <button className="hidden sm:block p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full shrink-0">
                 <Code className="w-5 h-5 text-gray-500" />
               </button>
               <textarea
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Написать сообщение..."
-                className="flex-1 px-4 py-2 border rounded-full resize-none max-h-32"
+                placeholder="Сообщение..."
+                className="flex-1 px-3 md:px-4 py-2 border dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-full resize-none max-h-32 text-sm md:text-base"
                 rows={1}
                 disabled={uploading}
               />
               <button
                 onClick={selectedFile ? handleFileUpload : handleSend}
                 disabled={(!newMessage.trim() && !selectedFile) || uploading}
-                className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"
+                className="p-2.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1 shrink-0"
               >
                 {uploading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -423,7 +427,7 @@ export default function ChatPage({ backLink = '/dashboard' }: ChatPageProps) {
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center text-gray-500">
+        <div className="hidden md:flex flex-1 items-center justify-center text-gray-500 dark:text-gray-400">
           Выберите чат
         </div>
       )}

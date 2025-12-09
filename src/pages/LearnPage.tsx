@@ -162,35 +162,35 @@ function CodeBlock({ code, language }: { code: string; language?: string }) {
   const displayLanguage = language ? (languageNames[language.toLowerCase()] || language.toUpperCase()) : 'Code'
 
   return (
-    <div className="my-6 rounded-lg border border-gray-200 bg-[#1e1e1e] overflow-hidden shadow-lg code-block-container">
+    <div className="my-4 md:my-6 rounded-lg border border-gray-200 dark:border-gray-700 bg-[#1e1e1e] overflow-hidden shadow-lg code-block-container w-full max-w-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-[#252526] border-b border-gray-700">
-        <div className="flex items-center gap-2">
-          <Code className="w-4 h-4 text-gray-400" />
-          <span className="text-sm font-medium text-gray-300">{displayLanguage}</span>
+      <div className="flex items-center justify-between px-3 md:px-4 py-2 md:py-2.5 bg-[#252526] border-b border-gray-700">
+        <div className="flex items-center gap-2 min-w-0">
+          <Code className="w-4 h-4 text-gray-400 hidden sm:block shrink-0" />
+          <span className="text-xs md:text-sm font-medium text-gray-300 truncate">{displayLanguage}</span>
         </div>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-gray-400 hover:text-gray-200 hover:bg-gray-700 rounded transition-colors"
+          className="flex items-center gap-1 md:gap-1.5 px-2 md:px-2.5 py-1 text-xs text-gray-400 hover:text-gray-200 hover:bg-gray-700 rounded transition-colors shrink-0"
           title="Копировать код"
         >
           {copied ? (
             <>
               <Check className="w-3.5 h-3.5" />
-              <span>Скопировано</span>
+              <span className="hidden sm:inline">Скопировано</span>
             </>
           ) : (
             <>
               <Copy className="w-3.5 h-3.5" />
-              <span>Копировать</span>
+              <span className="hidden sm:inline">Копировать</span>
             </>
           )}
         </button>
       </div>
       
       {/* Code Content */}
-      <div className="relative overflow-x-auto overflow-y-auto max-h-[600px] code-block-scroll">
-        <pre className="m-0 p-4 text-sm leading-relaxed">
+      <div className="relative overflow-x-auto overflow-y-auto max-h-[300px] md:max-h-[600px] code-block-scroll">
+        <pre className="m-0 p-3 md:p-4 text-[11px] md:text-sm leading-relaxed whitespace-pre">
           <code
             ref={codeRef}
             className={`language-${language ? normalizeLanguage(language) : 'text'}`}
@@ -296,14 +296,14 @@ function VideoPlayer({ url, title, duration }: { url?: string; title: string; du
   // If no URL, show placeholder
   if (!url) {
     return (
-      <div className="aspect-video bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl mb-8 flex items-center justify-center relative overflow-hidden">
+      <div className="aspect-video bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg md:rounded-xl mb-4 md:mb-8 flex items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(59,130,246,0.1),transparent)]" />
-        <div className="text-center text-white z-10">
-          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-white/10 flex items-center justify-center">
-            <Play className="w-10 h-10 text-white/80" />
+        <div className="text-center text-white z-10 px-4">
+          <div className="w-14 h-14 md:w-20 md:h-20 mx-auto mb-3 md:mb-4 rounded-full bg-white/10 flex items-center justify-center">
+            <Play className="w-7 h-7 md:w-10 md:h-10 text-white/80" />
           </div>
-          <p className="text-xl font-medium">{title}</p>
-          <p className="text-sm text-gray-400 mt-2">Видео скоро будет добавлено</p>
+          <p className="text-base md:text-xl font-medium line-clamp-2">{title}</p>
+          <p className="text-xs md:text-sm text-gray-400 mt-2">Видео скоро будет добавлено</p>
           {duration && <p className="text-xs text-gray-500 mt-1">Длительность: ~{duration} мин</p>}
         </div>
       </div>
@@ -337,7 +337,7 @@ function VideoPlayer({ url, title, duration }: { url?: string; title: string; du
     }
     
     return (
-      <div className="aspect-video bg-gray-900 rounded-xl mb-8 overflow-hidden">
+      <div className="aspect-video bg-gray-900 rounded-lg md:rounded-xl mb-4 md:mb-8 overflow-hidden">
         <iframe 
           src={embedUrl}
           className="w-full h-full border-0"
@@ -353,18 +353,21 @@ function VideoPlayer({ url, title, duration }: { url?: string; title: string; du
   return (
     <div 
       ref={containerRef}
-      className={`bg-black rounded-xl mb-8 relative overflow-hidden group ${isFullscreen ? 'fixed inset-0 z-50 rounded-none mb-0' : 'aspect-video'}`}
+      className={`bg-black rounded-lg md:rounded-xl mb-4 md:mb-8 relative overflow-hidden group ${isFullscreen ? 'fixed inset-0 z-50 rounded-none mb-0' : 'aspect-video'}`}
       onMouseEnter={() => setShowControls(true)}
       onMouseLeave={() => isPlaying && setShowControls(false)}
+      onTouchStart={() => setShowControls(true)}
     >
       <video
         ref={videoRef}
         src={url}
-        className={`w-full h-full object-contain ${isFullscreen ? '' : ''}`}
+        className="w-full h-full object-contain"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={() => setIsPlaying(false)}
         onClick={togglePlay}
+        playsInline
+        webkit-playsinline="true"
       />
       
       {/* Play overlay */}
@@ -373,42 +376,43 @@ function VideoPlayer({ url, title, duration }: { url?: string; title: string; du
           className="absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer"
           onClick={togglePlay}
         >
-          <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
-            <Play className="w-10 h-10 text-white ml-1" />
+          <div className="w-14 h-14 md:w-20 md:h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
+            <Play className="w-7 h-7 md:w-10 md:h-10 text-white ml-0.5 md:ml-1" />
           </div>
         </div>
       )}
       
       {/* Controls - fixed at bottom */}
-      <div className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4 pb-6 transition-opacity z-10 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2 md:p-4 pb-3 md:pb-6 transition-opacity z-10 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
         {/* Progress bar */}
-        <div className="flex items-center gap-3 mb-4">
-          <span className="text-white text-sm font-mono w-14">{formatTime(currentTime)}</span>
+        <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-4">
+          <span className="text-white text-[10px] md:text-sm font-mono w-10 md:w-14">{formatTime(currentTime)}</span>
           <input
             type="range"
             min={0}
             max={totalDuration || 100}
             value={currentTime}
             onChange={handleSeek}
-            className="flex-1 h-1.5 bg-white/30 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-lg"
+            className="flex-1 h-1 md:h-1.5 bg-white/30 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 md:[&::-webkit-slider-thumb]:w-4 md:[&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-lg"
           />
-          <span className="text-white text-sm font-mono w-14 text-right">{formatTime(totalDuration)}</span>
+          <span className="text-white text-[10px] md:text-sm font-mono w-10 md:w-14 text-right">{formatTime(totalDuration)}</span>
         </div>
         
         {/* Control buttons */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <button onClick={() => skip(-10)} className="p-2.5 text-white hover:bg-white/20 rounded-lg transition-colors">
-              <SkipBack className="w-5 h-5" />
+          <div className="flex items-center gap-0.5 md:gap-1">
+            <button onClick={() => skip(-10)} className="p-1.5 md:p-2.5 text-white hover:bg-white/20 rounded-lg transition-colors">
+              <SkipBack className="w-4 h-4 md:w-5 md:h-5" />
             </button>
-            <button onClick={togglePlay} className="p-3 text-white hover:bg-white/20 rounded-lg transition-colors">
-              {isPlaying ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7" />}
+            <button onClick={togglePlay} className="p-2 md:p-3 text-white hover:bg-white/20 rounded-lg transition-colors">
+              {isPlaying ? <Pause className="w-5 h-5 md:w-7 md:h-7" /> : <Play className="w-5 h-5 md:w-7 md:h-7" />}
             </button>
-            <button onClick={() => skip(10)} className="p-2.5 text-white hover:bg-white/20 rounded-lg transition-colors">
-              <SkipForward className="w-5 h-5" />
+            <button onClick={() => skip(10)} className="p-1.5 md:p-2.5 text-white hover:bg-white/20 rounded-lg transition-colors">
+              <SkipForward className="w-4 h-4 md:w-5 md:h-5" />
             </button>
             
-            <div className="flex items-center gap-2 ml-4">
+            {/* Volume - hidden on mobile */}
+            <div className="hidden md:flex items-center gap-2 ml-4">
               <button onClick={toggleMute} className="p-2.5 text-white hover:bg-white/20 rounded-lg transition-colors">
                 {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
               </button>
@@ -424,10 +428,14 @@ function VideoPlayer({ url, title, duration }: { url?: string; title: string; du
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
-            <span className="text-white text-sm hidden sm:block">{title}</span>
-            <button onClick={toggleFullscreen} className="p-2.5 text-white hover:bg-white/20 rounded-lg transition-colors">
-              <Maximize className="w-5 h-5" />
+          <div className="flex items-center gap-1 md:gap-3">
+            {/* Mute button on mobile */}
+            <button onClick={toggleMute} className="md:hidden p-1.5 text-white hover:bg-white/20 rounded-lg transition-colors">
+              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            </button>
+            <span className="text-white text-sm hidden lg:block truncate max-w-[200px]">{title}</span>
+            <button onClick={toggleFullscreen} className="p-1.5 md:p-2.5 text-white hover:bg-white/20 rounded-lg transition-colors">
+              <Maximize className="w-4 h-4 md:w-5 md:h-5" />
             </button>
           </div>
         </div>
@@ -437,26 +445,26 @@ function VideoPlayer({ url, title, duration }: { url?: string; title: string; du
 }
 
 // Sidebar for learning
-function LearnSidebar({ active = 'learn' }: { active?: string }) {
-  const links = [
-    { to: '/learn', id: 'learn', icon: Home, label: 'Обучение' },
-    { to: '/learn/progress', id: 'progress', icon: BarChart2, label: 'Прогресс' },
-    { to: '/learn/courses', id: 'courses', icon: BookOpen, label: 'Курсы' },
-    { to: '/dashboard/solutions', id: 'grades', icon: Trophy, label: 'Мои оценки' },
-    { to: '/learn/discussions', id: 'discussions', icon: MessageCircle, label: 'Обсуждения' },
-  ]
+const learnSidebarLinks = [
+  { to: '/learn', id: 'learn', icon: Home, label: 'Обучение' },
+  { to: '/learn/progress', id: 'progress', icon: BarChart2, label: 'Прогресс' },
+  { to: '/learn/courses', id: 'courses', icon: BookOpen, label: 'Курсы' },
+  { to: '/dashboard/solutions', id: 'grades', icon: Trophy, label: 'Оценки' },
+  { to: '/learn/discussions', id: 'discussions', icon: MessageCircle, label: 'Обсуждения' },
+]
 
+function LearnSidebar({ active = 'learn' }: { active?: string }) {
   return (
-    <aside className="w-[200px] border-r border-gray-200 bg-white shrink-0">
+    <aside className="hidden md:block w-[200px] border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shrink-0">
       <nav className="p-4 space-y-1">
-        {links.map(link => (
+        {learnSidebarLinks.map(link => (
           <Link 
             key={link.id}
             to={link.to} 
             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm ${
               active === link.id 
-                ? 'text-gray-900 bg-gray-100 font-medium' 
-                : 'text-gray-600 hover:bg-gray-50'
+                ? 'text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800 font-medium' 
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
             }`}
           >
             <link.icon className="w-5 h-5" />
@@ -464,18 +472,42 @@ function LearnSidebar({ active = 'learn' }: { active?: string }) {
           </Link>
         ))}
         
-        <div className="border-t border-gray-200 my-4" />
+        <div className="border-t border-gray-200 dark:border-gray-700 my-4" />
         
-        <a href="#" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
+        <a href="#" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800">
           <Users className="w-5 h-5" />
           Партнерка
         </a>
-        <a href="#" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
+        <a href="#" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800">
           <UserPlus className="w-5 h-5" />
           Команда
         </a>
       </nav>
     </aside>
+  )
+}
+
+// Mobile bottom navigation for Learn pages
+function LearnMobileNav({ active = 'learn' }: { active?: string }) {
+  return (
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 z-50 safe-area-bottom">
+      <div className="flex justify-around items-center h-14">
+        {learnSidebarLinks.slice(0, 5).map(link => (
+          <Link
+            key={link.id}
+            to={link.to}
+            className={`flex flex-col items-center justify-center flex-1 h-full py-1 ${
+              active === link.id
+                ? 'text-blue-600 dark:text-blue-400'
+                : 'text-gray-500 dark:text-gray-400'
+            }`}
+          >
+            <link.icon className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5">{link.label.length > 8 ? link.label.slice(0, 7) + '…' : link.label}</span>
+          </Link>
+        ))}
+      </div>
+    </nav>
   )
 }
 
@@ -577,11 +609,12 @@ export function LearnRoadmap() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
         <LearnSidebar />
-        <main className="flex-1 p-8 flex items-center justify-center">
+        <main className="flex-1 p-4 md:p-8 flex items-center justify-center pb-20 md:pb-8">
           <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
         </main>
+        <LearnMobileNav />
       </div>
     )
   }
@@ -589,13 +622,13 @@ export function LearnRoadmap() {
   // If no enrollments, show empty state
   if (enrollments.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
         <LearnSidebar />
-        <main className="flex-1 p-8 flex items-center justify-center">
+        <main className="flex-1 p-4 md:p-8 flex items-center justify-center pb-20 md:pb-8">
           <div className="text-center">
             <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-            <h2 className="text-xl font-medium text-gray-900 mb-2">Нет активных курсов</h2>
-            <p className="text-gray-500 mb-6">Запишитесь на курс, чтобы начать обучение</p>
+            <h2 className="text-xl font-medium text-gray-900 dark:text-white mb-2">Нет активных курсов</h2>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">Запишитесь на курс, чтобы начать обучение</p>
             <Link 
               to="/courses" 
               className="inline-flex items-center gap-2 px-6 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600"
@@ -604,32 +637,33 @@ export function LearnRoadmap() {
             </Link>
           </div>
         </main>
+        <LearnMobileNav />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
       <LearnSidebar />
       
-      <main className="flex-1 p-8">
+      <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8">
         {/* Course Selector */}
-        <div className="relative inline-block mb-8">
+        <div className="relative inline-block mb-6 md:mb-8">
           <button 
             onClick={() => setCourseDropdown(!courseDropdown)}
-            className="flex items-center gap-2 text-2xl font-medium text-gray-900"
+            className="flex items-center gap-2 text-lg md:text-2xl font-medium text-gray-900 dark:text-white"
           >
-            {currentCourse?.title || 'Выберите курс'}
-            <ChevronDown className={`w-5 h-5 transition-transform ${courseDropdown ? 'rotate-180' : ''}`} />
+            <span className="truncate max-w-[200px] md:max-w-none">{currentCourse?.title || 'Выберите курс'}</span>
+            <ChevronDown className={`w-5 h-5 shrink-0 transition-transform ${courseDropdown ? 'rotate-180' : ''}`} />
           </button>
           {courseDropdown && (
-            <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-10">
+            <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-10">
               {enrollments.map(e => (
                 <button 
                   key={e.id}
                   onClick={() => selectCourse(e)}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
-                    currentCourse?.id === e.course.id ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                    currentCourse?.id === e.course.id ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'
                   }`}
                 >
                   {e.course.title}
@@ -639,45 +673,45 @@ export function LearnRoadmap() {
           )}
         </div>
 
-        {/* Promo Banner */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6 mb-8 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
-              <Calendar className="w-6 h-6 text-yellow-600" />
+        {/* Promo Banner - stack on mobile */}
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 md:p-6 mb-6 md:mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl flex items-center justify-center shrink-0">
+              <Calendar className="w-5 h-5 md:w-6 md:h-6 text-yellow-600" />
             </div>
-            <div>
-              <div className="font-medium text-gray-900">Групповое обучение с наставником</div>
-              <div className="text-sm text-gray-500">Ревью проектов, вебинары, поддержка преподавателя</div>
+            <div className="min-w-0">
+              <div className="font-medium text-gray-900 dark:text-white text-sm md:text-base">Групповое обучение с наставником</div>
+              <div className="text-xs md:text-sm text-gray-500 dark:text-gray-400 truncate">Ревью проектов, вебинары, поддержка</div>
             </div>
           </div>
-          <Link to="/courses" className="px-6 py-2.5 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50">
+          <Link to="/courses" className="px-4 md:px-6 py-2 md:py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white text-center shrink-0">
             Все курсы
           </Link>
         </div>
 
         {/* Course Cards */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
           {/* Current Course */}
-          <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 md:p-6">
             <div className="flex items-start justify-between mb-4">
-              <div>
-                <h3 className="text-xl font-medium text-gray-900">{currentCourse?.title || 'Курс'}</h3>
-                <p className="text-sm text-gray-500">{currentCourse?.duration_hours || 0}ч обучения</p>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-lg md:text-xl font-medium text-gray-900 dark:text-white truncate">{currentCourse?.title || 'Курс'}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{currentCourse?.duration_hours || 0}ч обучения</p>
               </div>
-              <div className="w-12 h-12 rounded-full border-4 border-orange-400 flex items-center justify-center text-sm font-medium text-orange-500">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-4 border-orange-400 flex items-center justify-center text-xs md:text-sm font-medium text-orange-500 shrink-0 ml-2">
                 {currentCourse?.progress || 0}%
               </div>
             </div>
             
             {/* Progress bar */}
-            <div className="flex gap-1 mb-4">
+            <div className="flex gap-0.5 md:gap-1 mb-4">
               {Array.from({ length: 20 }).map((_, i) => {
                 const progress = currentCourse?.progress || 0
                 const filled = i < Math.floor(progress / 5)
                 return (
                   <div 
                     key={i} 
-                    className={`h-1.5 flex-1 rounded-full ${filled ? 'bg-blue-500' : 'bg-gray-100'}`}
+                    className={`h-1 md:h-1.5 flex-1 rounded-full ${filled ? 'bg-blue-500' : 'bg-gray-100 dark:bg-gray-700'}`}
                   />
                 )
               })}
@@ -686,33 +720,33 @@ export function LearnRoadmap() {
             <button 
               onClick={() => firstLessonId && navigate(`/learn/lesson/${firstLessonId}`)}
               disabled={!firstLessonId}
-              className="flex items-center gap-2 px-5 py-2.5 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 disabled:opacity-50"
+              className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 disabled:opacity-50"
             >
               Учиться <ArrowRight className="w-4 h-4" />
             </button>
           </div>
 
           {/* Project Card */}
-          <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 md:p-6">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h3 className="text-xl font-medium text-gray-900">Практический проект</h3>
-                <p className="text-sm text-gray-500">Проект</p>
+                <h3 className="text-lg md:text-xl font-medium text-gray-900 dark:text-white">Практический проект</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Проект</p>
               </div>
-              <div className="text-sm text-gray-500">0/5 этапов</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">0/5 этапов</div>
             </div>
             
             {/* Progress bar */}
-            <div className="flex gap-1 mb-4">
+            <div className="flex gap-0.5 md:gap-1 mb-4">
               {Array.from({ length: 9 }).map((_, i) => (
-                <div key={i} className="h-1.5 flex-1 rounded-full bg-gray-100" />
+                <div key={i} className="h-1 md:h-1.5 flex-1 rounded-full bg-gray-100 dark:bg-gray-700" />
               ))}
             </div>
 
             <button 
               onClick={() => firstLessonId && navigate(`/learn/lesson/${firstLessonId}`)}
               disabled={!firstLessonId}
-              className="flex items-center gap-2 px-5 py-2.5 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 disabled:opacity-50"
+              className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 disabled:opacity-50"
             >
               Кодить <ArrowRight className="w-4 h-4" />
             </button>
@@ -721,23 +755,23 @@ export function LearnRoadmap() {
 
         {/* Modules List */}
         {modules.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
             <p>Модули курса пока не добавлены</p>
           </div>
         ) : (
-          <div className="grid md:grid-cols-3 gap-x-8 gap-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 md:gap-x-8 gap-y-6">
             {modules.map((module: any) => (
               <div key={module.id}>
-                <h4 className="font-medium text-gray-900 mb-3">{module.title}</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-3 text-sm md:text-base">{module.title}</h4>
                 <div className="space-y-2">
                   {(module.lessons || []).map((lesson: any) => (
                     <Link
                       key={lesson.id}
                       to={`/learn/lesson/${lesson.id}`}
-                      className="flex items-center gap-3 py-1 text-sm text-gray-600 hover:text-gray-900"
+                      className="flex items-center gap-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                     >
                       {getLessonIcon(lesson.type, lesson.completed || false)}
-                      <span className={lesson.completed ? 'text-gray-400' : ''}>{lesson.title}</span>
+                      <span className={`truncate ${lesson.completed ? 'text-gray-400 dark:text-gray-500' : ''}`}>{lesson.title}</span>
                     </Link>
                   ))}
                 </div>
@@ -746,6 +780,7 @@ export function LearnRoadmap() {
           </div>
         )}
       </main>
+      <LearnMobileNav />
     </div>
   )
 }
@@ -895,7 +930,7 @@ export function LessonPage() {
             duration={lesson.duration_minutes}
           />
           {lesson.content && (
-            <div className="prose prose-gray max-w-none">
+            <div className="prose prose-gray dark:prose-invert max-w-none overflow-x-hidden break-words">
               {renderMarkdownContent(lesson.content)}
             </div>
           )}
@@ -905,10 +940,10 @@ export function LessonPage() {
 
     if (lesson.type === 'theory') {
       return (
-        <div className="prose prose-gray max-w-none">
-          <h1>{lesson.title}</h1>
+        <div className="prose prose-gray dark:prose-invert max-w-none overflow-x-hidden break-words">
+          <h1 className="text-xl md:text-3xl break-words">{lesson.title}</h1>
           {lesson.content ? (
-            <div>
+            <div className="overflow-x-hidden">
               {renderMarkdownContent(lesson.content)}
             </div>
           ) : (
@@ -1007,7 +1042,7 @@ export function LessonPage() {
     const parts = html.split(/(__CODE_BLOCK_\d+__)/)
     
     return (
-      <div>
+      <div className="overflow-x-hidden w-full">
         {parts.map((part, index) => {
           const codeBlockMatch = part.match(/__CODE_BLOCK_(\d+)__/)
           if (codeBlockMatch) {
@@ -1015,21 +1050,21 @@ export function LessonPage() {
             const codeBlock = codeBlocks[blockIndex]
             return <CodeBlock key={`code-${index}`} code={codeBlock.code} language={codeBlock.language} />
           }
-          return <div key={`html-${index}`} dangerouslySetInnerHTML={{ __html: part }} />
+          return <div key={`html-${index}`} className="break-words" dangerouslySetInnerHTML={{ __html: part }} />
         })}
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-white flex">
+    <div className="min-h-screen bg-white dark:bg-gray-900 flex overflow-x-hidden">
       {/* Main Content */}
-      <main className="flex-1 max-w-4xl mx-auto p-8">
+      <main className="flex-1 w-full max-w-4xl mx-auto p-4 md:p-8 pb-24 md:pb-8 overflow-x-hidden">
         {/* Breadcrumb */}
-        <div className="text-sm text-gray-500 mb-6">
-          <Link to="/learn" className="hover:text-gray-700">{lesson.course_title}</Link>
-          <span className="mx-2">→</span>
-          <span>{lesson.module_title}</span>
+        <div className="text-sm text-gray-500 dark:text-gray-400 mb-4 md:mb-6 flex items-center gap-2">
+          <Link to="/learn" className="hover:text-gray-700 dark:hover:text-gray-300 truncate max-w-[120px] md:max-w-none">{lesson.course_title}</Link>
+          <span className="shrink-0">→</span>
+          <span className="truncate">{lesson.module_title}</span>
         </div>
 
         {renderLessonContent()}
@@ -1108,8 +1143,8 @@ export function LessonPage() {
         )}
       </main>
 
-      {/* Right Sidebar */}
-      <aside className="w-[280px] border-l border-gray-200 bg-white shrink-0">
+      {/* Right Sidebar - hidden on mobile */}
+      <aside className="hidden lg:block w-[280px] border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shrink-0">
         <div className="sticky top-0">
           <button 
             onClick={async () => {
@@ -1125,33 +1160,33 @@ export function LessonPage() {
           </button>
 
           <div className="p-4">
-            <Link to="/learn" className="flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg">
+            <Link to="/learn" className="flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg">
               <Home className="w-5 h-5" />
               Навигация
             </Link>
             
             <div className="mt-4 px-3">
-              <div className="text-sm text-gray-500">пройдено {navigation.current} урок из {navigation.total}</div>
-              <div className="h-1 bg-gray-200 rounded-full mt-2">
+              <div className="text-sm text-gray-500 dark:text-gray-400">пройдено {navigation.current} урок из {navigation.total}</div>
+              <div className="h-1 bg-gray-200 dark:bg-gray-700 rounded-full mt-2">
                 <div className="h-1 bg-green-500 rounded-full" style={{ width: `${progress}%` }} />
               </div>
             </div>
 
             <div className="mt-6 space-y-1">
-              <div className="px-3 py-2 text-sm font-medium text-gray-900">
+              <div className="px-3 py-2 text-sm font-medium text-gray-900 dark:text-white">
                 Шаг: {lesson.type === 'video' ? 'видео' : lesson.type === 'quiz' ? 'тест' : lesson.type === 'practice' ? 'практика' : 'теория'}
               </div>
-              <button className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg">Обсуждение</button>
-              <button className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg">Теория</button>
-              <button className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg">Сложности и вопросы?</button>
+              <button className="w-full text-left px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg">Обсуждение</button>
+              <button className="w-full text-left px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg">Теория</button>
+              <button className="w-full text-left px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg">Сложности и вопросы?</button>
             </div>
 
             {/* Navigation buttons */}
-            <div className="mt-6 border-t border-gray-200 pt-4 space-y-2">
+            <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
               {navigation.prev && (
                 <Link
                   to={`/learn/lesson/${navigation.prev.id}`}
-                  className="block w-full px-4 py-2 text-sm text-center border border-gray-200 rounded-lg hover:bg-gray-50"
+                  className="block w-full px-4 py-2 text-sm text-center border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
                 >
                   ← {navigation.prev.title}
                 </Link>
@@ -1168,6 +1203,31 @@ export function LessonPage() {
           </div>
         </div>
       </aside>
+
+      {/* Mobile Bottom Navigation for Lesson */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 p-3 safe-area-bottom z-50">
+        <div className="flex items-center gap-3">
+          {navigation.prev && (
+            <Link
+              to={`/learn/lesson/${navigation.prev.id}`}
+              className="p-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
+            >
+              ←
+            </Link>
+          )}
+          <button 
+            onClick={async () => {
+              if (!isCompleted && (lesson.type === 'video' || lesson.type === 'theory')) {
+                await markAsCompleted()
+              }
+              navigation.next ? navigate(`/learn/lesson/${navigation.next.id}`) : navigate('/learn')
+            }}
+            className="flex-1 flex items-center justify-center gap-2 py-3 bg-orange-500 text-white font-medium rounded-lg hover:bg-orange-600"
+          >
+            {navigation.next ? 'Далее' : 'Завершить'} <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -1193,51 +1253,52 @@ export function LearnCourses() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
         <LearnSidebar active="courses" />
-        <main className="flex-1 p-8 flex items-center justify-center">
+        <main className="flex-1 p-4 md:p-8 flex items-center justify-center pb-20 md:pb-8">
           <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
         </main>
+        <LearnMobileNav active="courses" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
       <LearnSidebar active="courses" />
-      <main className="flex-1 p-8">
-        <h1 className="text-2xl font-medium text-gray-900 mb-8">Мои курсы</h1>
+      <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8">
+        <h1 className="text-xl md:text-2xl font-medium text-gray-900 dark:text-white mb-6 md:mb-8">Мои курсы</h1>
         
         {enrollments.length === 0 ? (
-          <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
-            <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-            <h3 className="text-xl font-medium text-gray-400 mb-2">Вы еще не записаны на курсы</h3>
-            <p className="text-gray-400 mb-4">Выберите курс из каталога и начните обучение</p>
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-8 md:p-12 text-center">
+            <BookOpen className="w-12 md:w-16 h-12 md:h-16 mx-auto mb-4 text-gray-300" />
+            <h3 className="text-lg md:text-xl font-medium text-gray-400 mb-2">Вы еще не записаны на курсы</h3>
+            <p className="text-gray-400 mb-4 text-sm md:text-base">Выберите курс из каталога и начните обучение</p>
             <Link to="/courses" className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600">
               Перейти к курсам <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {enrollments.map(enrollment => (
               <Link 
                 key={enrollment.id}
                 to="/learn"
-                className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all"
+                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 md:p-6 hover:shadow-md transition-all"
               >
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">{enrollment.course.category || 'Курс'}</span>
-                  <span className="text-sm text-gray-500">{enrollment.course.level}</span>
+                <div className="flex items-center justify-between mb-3 md:mb-4">
+                  <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded">{enrollment.course.category || 'Курс'}</span>
+                  <span className="text-xs md:text-sm text-gray-500 dark:text-gray-400">{enrollment.course.level}</span>
                 </div>
-                <h3 className="font-medium text-gray-900 mb-4">{enrollment.course.title}</h3>
+                <h3 className="font-medium text-gray-900 dark:text-white mb-3 md:mb-4 text-sm md:text-base">{enrollment.course.title}</h3>
                 <div className="flex items-center gap-3">
-                  <div className="flex-1 h-2 bg-gray-200 rounded-full">
+                  <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
                     <div 
                       className={`h-2 rounded-full ${enrollment.progress === 100 ? 'bg-green-500' : 'bg-blue-500'}`}
                       style={{ width: `${enrollment.progress}%` }}
                     />
                   </div>
-                  <span className="text-sm text-gray-500">{enrollment.progress}%</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">{enrollment.progress}%</span>
                 </div>
               </Link>
             ))}
@@ -1245,6 +1306,7 @@ export function LearnCourses() {
         )}
 
       </main>
+      <LearnMobileNav active="courses" />
     </div>
   )
 }
@@ -1269,43 +1331,44 @@ export function LearnProgress() {
   }
 
   const stats = userStats ? [
-    { label: 'Пройдено уроков', value: String(userStats.lessonsCompleted) },
-    { label: 'Часов обучения', value: String(userStats.studyHours) },
-    { label: 'Выполнено упражнений', value: String(userStats.exercisesCompleted) },
-    { label: 'Завершено курсов', value: String(userStats.coursesCompleted) },
+    { label: 'Уроков', value: String(userStats.lessonsCompleted) },
+    { label: 'Часов', value: String(userStats.studyHours) },
+    { label: 'Упражнений', value: String(userStats.exercisesCompleted) },
+    { label: 'Курсов', value: String(userStats.coursesCompleted) },
   ] : []
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
         <LearnSidebar active="progress" />
-        <main className="flex-1 p-8 flex items-center justify-center">
+        <main className="flex-1 p-4 md:p-8 flex items-center justify-center pb-20 md:pb-8">
           <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
         </main>
+        <LearnMobileNav active="progress" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
       <LearnSidebar active="progress" />
-      <main className="flex-1 p-8">
-        <h1 className="text-2xl font-medium text-gray-900 mb-8">Прогресс</h1>
+      <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8">
+        <h1 className="text-xl md:text-2xl font-medium text-gray-900 dark:text-white mb-6 md:mb-8">Прогресс</h1>
         
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
           {stats.map(stat => (
-            <div key={stat.label} className="bg-white border border-gray-200 rounded-xl p-6">
-              <div className="text-3xl font-medium text-gray-900 mb-1">{stat.value}</div>
-              <div className="text-sm text-gray-500">{stat.label}</div>
+            <div key={stat.label} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 md:p-6">
+              <div className="text-2xl md:text-3xl font-medium text-gray-900 dark:text-white mb-1">{stat.value}</div>
+              <div className="text-xs md:text-sm text-gray-500 dark:text-gray-400">{stat.label}</div>
             </div>
           ))}
         </div>
 
         {/* Activity Chart */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6 mb-8">
-          <h2 className="font-medium text-gray-900 mb-6">Активность за последние 30 дней</h2>
-          <div className="flex items-end gap-1 h-32">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 md:p-6 mb-6 md:mb-8">
+          <h2 className="font-medium text-gray-900 dark:text-white mb-4 md:mb-6 text-sm md:text-base">Активность за 30 дней</h2>
+          <div className="flex items-end gap-0.5 md:gap-1 h-24 md:h-32 overflow-x-auto">
             {Array.from({ length: 30 }).map((_, i) => {
               // Find activity for this day
               const date = new Date()
@@ -1316,31 +1379,31 @@ export function LearnProgress() {
               return (
                 <div 
                   key={i}
-                  className={`flex-1 rounded-t ${height > 5 ? 'bg-blue-500' : 'bg-gray-200'}`}
+                  className={`flex-1 min-w-[6px] rounded-t ${height > 5 ? 'bg-blue-500' : 'bg-gray-200 dark:bg-gray-700'}`}
                   style={{ height: `${Math.max(height, 5)}%` }}
                   title={`${dateStr}: ${dayActivity?.count || 0} действий`}
                 />
               )
             })}
           </div>
-          <div className="flex justify-between mt-2 text-xs text-gray-400">
+          <div className="flex justify-between mt-2 text-[10px] md:text-xs text-gray-400">
             <span>{new Date(Date.now() - 29 * 24 * 60 * 60 * 1000).toLocaleDateString('ru', { day: 'numeric', month: 'short' })}</span>
-            <span>{new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toLocaleDateString('ru', { day: 'numeric', month: 'short' })}</span>
+            <span className="hidden md:inline">{new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toLocaleDateString('ru', { day: 'numeric', month: 'short' })}</span>
             <span>{new Date().toLocaleDateString('ru', { day: 'numeric', month: 'short' })}</span>
           </div>
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <h2 className="font-medium text-gray-900 mb-6">Последняя активность</h2>
-          <div className="space-y-4">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 md:p-6">
+          <h2 className="font-medium text-gray-900 dark:text-white mb-4 md:mb-6 text-sm md:text-base">Последняя активность</h2>
+          <div className="space-y-3 md:space-y-4">
             {userStats?.recentActivity?.length ? userStats.recentActivity.map((activity, i) => (
-              <div key={i} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                <div>
-                  <span className="text-gray-500">{activity.action}:</span>
-                  <span className="text-gray-900 ml-2">{activity.item}</span>
+              <div key={i} className="flex flex-col md:flex-row md:items-center justify-between py-2 md:py-3 border-b border-gray-100 dark:border-gray-700 last:border-0 gap-1">
+                <div className="text-sm">
+                  <span className="text-gray-500 dark:text-gray-400">{activity.action}:</span>
+                  <span className="text-gray-900 dark:text-white ml-2">{activity.item}</span>
                 </div>
-                <span className="text-sm text-gray-400">
+                <span className="text-xs md:text-sm text-gray-400">
                   {new Date(activity.time).toLocaleDateString('ru', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
@@ -1350,6 +1413,7 @@ export function LearnProgress() {
           </div>
         </div>
       </main>
+      <LearnMobileNav active="progress" />
     </div>
   )
 }
@@ -1430,34 +1494,35 @@ export function LearnDiscussions() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
         <LearnSidebar active="discussions" />
-        <main className="flex-1 p-8 flex items-center justify-center">
+        <main className="flex-1 p-4 md:p-8 flex items-center justify-center pb-20 md:pb-8">
           <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
         </main>
+        <LearnMobileNav active="discussions" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
       <LearnSidebar active="discussions" />
-      <main className="flex-1 p-8">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-medium text-gray-900">Обсуждения</h1>
+      <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8">
+          <h1 className="text-xl md:text-2xl font-medium text-gray-900 dark:text-white">Обсуждения</h1>
           <button 
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600"
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 w-full sm:w-auto"
           >
             Новая тема
           </button>
         </div>
         
         {discussions.length === 0 ? (
-          <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
-            <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-            <h3 className="text-xl font-medium text-gray-400 mb-2">Пока нет обсуждений</h3>
-            <p className="text-gray-400 mb-4">Создайте первую тему для обсуждения</p>
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-8 md:p-12 text-center">
+            <MessageCircle className="w-12 md:w-16 h-12 md:h-16 mx-auto mb-4 text-gray-300" />
+            <h3 className="text-lg md:text-xl font-medium text-gray-400 mb-2">Пока нет обсуждений</h3>
+            <p className="text-gray-400 mb-4 text-sm md:text-base">Создайте первую тему для обсуждения</p>
             <button 
               onClick={() => setShowCreateModal(true)}
               className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600"
@@ -1466,25 +1531,25 @@ export function LearnDiscussions() {
             </button>
           </div>
         ) : (
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
             {discussions.map((discussion, i) => (
               <div 
                 key={discussion.id}
                 onClick={() => navigate(`/learn/discussions/${discussion.id}`)}
-                className={`p-6 hover:bg-gray-50 cursor-pointer ${i !== discussions.length - 1 ? 'border-b border-gray-100' : ''}`}
+                className={`p-4 md:p-6 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer ${i !== discussions.length - 1 ? 'border-b border-gray-100 dark:border-gray-700' : ''}`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="font-medium text-gray-900 mb-1">{discussion.title}</h3>
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-gray-900 dark:text-white mb-1 text-sm md:text-base">{discussion.title}</h3>
+                    <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-gray-500 dark:text-gray-400">
                       <span>{discussion.course || 'Общее'}</span>
-                      <span>•</span>
+                      <span className="hidden sm:inline">•</span>
                       <span>{discussion.author}</span>
-                      <span>•</span>
+                      <span className="hidden sm:inline">•</span>
                       <span>{discussion.time}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-500 ml-4">
+                  <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                     <MessageCircle className="w-4 h-4" />
                     {discussion.replies}
                   </div>
@@ -1496,27 +1561,27 @@ export function LearnDiscussions() {
 
         {/* Create Discussion Modal */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowCreateModal(false)}>
-            <div className="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-              <h2 className="text-xl font-medium text-gray-900 mb-4">Новая тема</h2>
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowCreateModal(false)}>
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 md:p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <h2 className="text-lg md:text-xl font-medium text-gray-900 dark:text-white mb-4">Новая тема</h2>
               
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Заголовок</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Заголовок</label>
                 <input
                   type="text"
                   value={createTitle}
                   onChange={(e) => setCreateTitle(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Введите заголовок темы"
                 />
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Курс (необязательно)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Курс (необязательно)</label>
                 <select
                   value={createCourseId}
                   onChange={(e) => setCreateCourseId(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Общее обсуждение</option>
                   {enrollments.map(e => (
@@ -1526,17 +1591,17 @@ export function LearnDiscussions() {
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Содержание</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Содержание</label>
                 <textarea
                   value={createContent}
                   onChange={(e) => setCreateContent(e.target.value)}
-                  rows={8}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={6}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Опишите вашу тему..."
                 />
               </div>
 
-              <div className="flex gap-3 justify-end">
+              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
                 <button
                   onClick={() => {
                     setShowCreateModal(false)
@@ -1544,7 +1609,7 @@ export function LearnDiscussions() {
                     setCreateContent('')
                     setCreateCourseId('')
                   }}
-                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   Отмена
                 </button>
@@ -1560,6 +1625,7 @@ export function LearnDiscussions() {
           </div>
         )}
       </main>
+      <LearnMobileNav active="discussions" />
       <ToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
     </div>
   )
@@ -1622,22 +1688,23 @@ export function DiscussionDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
         <LearnSidebar active="discussions" />
-        <main className="flex-1 p-8 flex items-center justify-center">
+        <main className="flex-1 p-4 md:p-8 flex items-center justify-center pb-20 md:pb-8">
           <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
         </main>
+        <LearnMobileNav active="discussions" />
       </div>
     )
   }
 
   if (!discussion) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
         <LearnSidebar active="discussions" />
-        <main className="flex-1 p-8">
-          <div className="bg-white border border-gray-200 rounded-xl p-8 text-center">
-            <h2 className="text-xl font-medium text-gray-900 mb-2">Обсуждение не найдено</h2>
+        <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-8 text-center">
+            <h2 className="text-xl font-medium text-gray-900 dark:text-white mb-2">Обсуждение не найдено</h2>
             <button
               onClick={() => navigate('/learn/discussions')}
               className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
@@ -1646,89 +1713,91 @@ export function DiscussionDetail() {
             </button>
           </div>
         </main>
+        <LearnMobileNav active="discussions" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
       <LearnSidebar active="discussions" />
-      <main className="flex-1 p-8">
+      <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8">
         <button
           onClick={() => navigate('/learn/discussions')}
-          className="mb-4 text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1"
+          className="mb-4 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white flex items-center gap-1"
         >
           <ArrowRight className="w-4 h-4 rotate-180" />
-          Назад к обсуждениям
+          Назад
         </button>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-6 mb-4">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 md:p-6 mb-4">
           <div className="flex items-start justify-between mb-4">
-            <div>
-              <h1 className="text-2xl font-medium text-gray-900 mb-2">{discussion.title}</h1>
-              <div className="flex items-center gap-4 text-sm text-gray-500">
+            <div className="min-w-0">
+              <h1 className="text-lg md:text-2xl font-medium text-gray-900 dark:text-white mb-2">{discussion.title}</h1>
+              <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-gray-500 dark:text-gray-400">
                 <span>{discussion.course || 'Общее'}</span>
-                <span>•</span>
+                <span className="hidden sm:inline">•</span>
                 <span>{discussion.author}</span>
-                <span>•</span>
+                <span className="hidden sm:inline">•</span>
                 <span>{discussion.time}</span>
               </div>
             </div>
           </div>
           
-          <div className="prose max-w-none text-gray-700 whitespace-pre-wrap mb-6">
+          <div className="prose max-w-none text-gray-700 dark:text-gray-300 whitespace-pre-wrap text-sm md:text-base">
             {discussion.content}
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-6 mb-4">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 md:p-6 mb-4">
+          <h2 className="text-base md:text-lg font-medium text-gray-900 dark:text-white mb-4">
             Ответы ({discussion.replies_list?.length || 0})
           </h2>
 
           {discussion.replies_list && discussion.replies_list.length > 0 ? (
             <div className="space-y-4">
               {discussion.replies_list.map((reply) => (
-                <div key={reply.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                <div key={reply.id} className="border-b border-gray-100 dark:border-gray-700 pb-4 last:border-0 last:pb-0">
                   <div className="flex items-start gap-3 mb-2">
-                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-sm font-medium text-gray-600">
+                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-400 shrink-0">
                       {reply.author.charAt(0).toUpperCase()}
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-gray-900">{reply.author}</span>
-                        <span className="text-sm text-gray-500">•</span>
-                        <span className="text-sm text-gray-500">{reply.time}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-1 md:gap-2 mb-1">
+                        <span className="font-medium text-gray-900 dark:text-white text-sm">{reply.author}</span>
+                        <span className="text-xs md:text-sm text-gray-500">•</span>
+                        <span className="text-xs md:text-sm text-gray-500 dark:text-gray-400">{reply.time}</span>
                       </div>
-                      <div className="text-gray-700 whitespace-pre-wrap">{reply.content}</div>
+                      <div className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap text-sm">{reply.content}</div>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 text-center py-8">Пока нет ответов</p>
+            <p className="text-gray-500 text-center py-8 text-sm">Пока нет ответов</p>
           )}
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Оставить ответ</h3>
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 md:p-6">
+          <h3 className="text-base md:text-lg font-medium text-gray-900 dark:text-white mb-4">Оставить ответ</h3>
           <textarea
             value={replyContent}
             onChange={(e) => setReplyContent(e.target.value)}
-            rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+            rows={3}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4 text-sm md:text-base"
             placeholder="Напишите ваш ответ..."
           />
           <button
             onClick={handleReply}
             disabled={!replyContent.trim() || replying}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+            className="w-full md:w-auto px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
           >
             {replying ? 'Отправка...' : 'Отправить'}
           </button>
         </div>
       </main>
+      <LearnMobileNav active="discussions" />
       <ToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
     </div>
   )
@@ -2582,8 +2651,8 @@ class Solution {
       </div>
 
       <div className="flex-1 flex overflow-hidden">
-        {/* File Tree / Project Explorer */}
-        <div className="w-[240px] bg-[#252526] border-r border-[#3c3c3c] flex flex-col">
+        {/* File Tree / Project Explorer - hidden on mobile */}
+        <div className="hidden md:flex w-[200px] lg:w-[240px] bg-[#252526] border-r border-[#3c3c3c] flex-col">
           {/* Explorer Header */}
           <div className="px-4 py-2 text-[11px] text-gray-400 uppercase tracking-wider font-semibold border-b border-[#3c3c3c] flex items-center justify-between">
             <span>Explorer</span>
@@ -2867,8 +2936,8 @@ class Solution {
           </div>
         </div>
 
-        {/* Right Sidebar */}
-        <aside className="w-[260px] bg-white border-l border-gray-200 flex flex-col">
+        {/* Right Sidebar - hidden on mobile */}
+        <aside className="hidden lg:flex w-[260px] bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 flex-col">
           {/* Action buttons */}
           <div className="flex flex-col">
             <button 
@@ -2911,7 +2980,7 @@ class Solution {
             )}
             
             {submitted && (
-              <div className="px-4 py-3 bg-green-100 text-green-700 text-sm text-center">
+              <div className="px-4 py-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm text-center">
                 ✅ Решение отправлено!
               </div>
             )}
@@ -2919,7 +2988,7 @@ class Solution {
 
           {/* Test Results Summary */}
           {testResults && (
-            <div className={`p-3 text-sm ${testResults.passed === testResults.total ? 'bg-green-50' : 'bg-red-50'}`}>
+            <div className={`p-3 text-sm ${testResults.passed === testResults.total ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
               <div className="flex items-center gap-2 font-medium">
                 {testResults.passed === testResults.total ? (
                   <><CheckCircle className="w-4 h-4 text-green-600" /> Все тесты пройдены!</>
@@ -2932,10 +3001,10 @@ class Solution {
 
           <div className="p-4 flex-1 overflow-y-auto">
             {/* Task description */}
-            <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-              <h3 className="text-sm font-medium text-blue-900 mb-1">📋 {exerciseTitle}</h3>
+            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+              <h3 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-1">📋 {exerciseTitle}</h3>
               {exerciseDescription && (
-                <p className="text-xs text-blue-700 line-clamp-3">{exerciseDescription.slice(0, 150)}...</p>
+                <p className="text-xs text-blue-700 dark:text-blue-400 line-clamp-3">{exerciseDescription.slice(0, 150)}...</p>
               )}
               <button 
                 onClick={() => setActiveTab('readme')}
@@ -2945,19 +3014,19 @@ class Solution {
               </button>
             </div>
 
-            <Link to="/learn" className="flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg">
+            <Link to="/learn" className="flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg">
               <Home className="w-5 h-5" />
               Назад к курсу
             </Link>
             
             <div className="mt-4 px-3">
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
                 {lessonData?.navigation 
                   ? `Урок ${lessonData.navigation.current} из ${lessonData.navigation.total}`
                   : 'пройдено 20 уроков из 45'
                 }
               </div>
-              <div className="h-2 bg-gray-200 rounded-full mt-2">
+              <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full mt-2">
                 <div 
                   className="h-2 bg-green-500 rounded-full transition-all" 
                   style={{ width: lessonData?.navigation ? `${(lessonData.navigation.current / lessonData.navigation.total) * 100}%` : '44%' }} 
@@ -2965,16 +3034,16 @@ class Solution {
               </div>
             </div>
 
-            <div className="mt-6 space-y-1 border-t border-gray-200 pt-4">
+            <div className="mt-6 space-y-1 border-t border-gray-200 dark:border-gray-700 pt-4">
               <button 
                 onClick={resetCode}
-                className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg"
+                className="w-full text-left px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg"
               >
                 ↩️ Сброс кода
               </button>
               <button 
                 onClick={showHint}
-                className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg"
+                className="w-full text-left px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg"
               >
                 💡 Подсказка ({exerciseHints.length})
               </button>
@@ -2982,11 +3051,65 @@ class Solution {
           </div>
 
           {/* Bottom character */}
-          <div className="p-4 text-center border-t border-gray-100">
+          <div className="p-4 text-center border-t border-gray-100 dark:border-gray-700">
             <div className="text-3xl">🦉</div>
             <p className="text-xs text-gray-400 mt-1">MoonCode Helper</p>
           </div>
         </aside>
+      </div>
+
+      {/* Mobile Bottom Action Bar for Practice */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 safe-area-bottom z-50">
+        <div className="flex items-center p-2 gap-2">
+          <Link to="/learn" className="p-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
+            <Home className="w-5 h-5" />
+          </Link>
+          <button 
+            onClick={resetCode}
+            className="p-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+          >
+            ↩️
+          </button>
+          <button 
+            onClick={showHint}
+            className="p-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+          >
+            💡
+          </button>
+          <button 
+            onClick={runCode}
+            disabled={isRunning}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 text-white font-medium rounded-lg transition-colors ${
+              isRunning ? 'bg-gray-400' : 'bg-green-500 hover:bg-green-600'
+            }`}
+          >
+            {isRunning ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span className="hidden sm:inline">Выполняется...</span>
+              </>
+            ) : (
+              <>
+                <Play className="w-4 h-4" /> 
+                <span className="hidden sm:inline">Проверить</span>
+              </>
+            )}
+          </button>
+          {testResults && testResults.passed === testResults.total && !submitted && (
+            <button 
+              onClick={submitSolution}
+              disabled={isSubmitting}
+              className="px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg"
+            >
+              {isSubmitting ? '...' : '✓'}
+            </button>
+          )}
+        </div>
+        {testResults && (
+          <div className={`px-3 py-2 text-xs text-center ${testResults.passed === testResults.total ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'}`}>
+            {testResults.passed === testResults.total ? '✅ Все тесты пройдены!' : `❌ ${testResults.passed}/${testResults.total} тестов`}
+          </div>
+        )}
       </div>
     </div>
   )

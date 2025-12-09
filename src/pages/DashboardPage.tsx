@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, Outlet, useLocation, useParams, useNavigate } from 'react-router-dom'
 import { 
   Home, BookOpen, Target, FileCode, Trophy, 
-  MessageSquare, Lightbulb, Users, X,
+  MessageSquare, Lightbulb, Users, X, Menu,
   Gift, Briefcase, Send, UserPlus, CheckCircle, Clock,
   ArrowRight, ChevronRight, ChevronDown, Paperclip, Image as ImageIcon, FileText, Loader2
 } from 'lucide-react'
@@ -11,24 +11,25 @@ import { submissionsAPI, chatAPI, userAPI, createWebSocket } from '../api'
 import type { Submission, Chat, Message, Teacher, UserEnrollment, UserStats, LeaderboardEntry } from '../api'
 import { StreakWidget } from '../components/StreakWidget'
 
-// Sidebar Navigation
+// Navigation links configuration
+const mainLinks = [
+  { to: '/dashboard', icon: Home, label: 'Дашборд', exact: true as const },
+  { to: '/dashboard/courses', icon: BookOpen, label: 'Мои курсы', exact: false as const },
+  { to: '/dashboard/challenges', icon: Target, label: 'Мои испытания', exact: false as const },
+  { to: '/dashboard/solutions', icon: FileCode, label: 'Мои решения', exact: false as const },
+  { to: '/dashboard/rating', icon: Trophy, label: 'Рейтинг', exact: false as const },
+  { to: '/dashboard/chat', icon: MessageSquare, label: 'Чат с учителем', exact: false as const },
+]
+
+const secondaryLinks = [
+  { to: '/dashboard/contact', icon: MessageSquare, label: 'Связаться', exact: false as const },
+  { to: '/dashboard/feedback', icon: Lightbulb, label: 'Идеи', exact: false as const },
+  { to: '/dashboard/teams', icon: Users, label: 'Для команд', exact: false as const },
+]
+
+// Desktop Sidebar Navigation
 function Sidebar() {
   const location = useLocation()
-  
-  const mainLinks = [
-    { to: '/dashboard', icon: Home, label: 'Дашборд', exact: true },
-    { to: '/dashboard/courses', icon: BookOpen, label: 'Мои курсы' },
-    { to: '/dashboard/challenges', icon: Target, label: 'Мои испытания' },
-    { to: '/dashboard/solutions', icon: FileCode, label: 'Мои решения' },
-    { to: '/dashboard/rating', icon: Trophy, label: 'Рейтинг' },
-    { to: '/dashboard/chat', icon: MessageSquare, label: 'Чат с учителем' },
-  ]
-  
-  const secondaryLinks = [
-    { to: '/dashboard/contact', icon: MessageSquare, label: 'Свяжитесь со мной' },
-    { to: '/dashboard/feedback', icon: Lightbulb, label: 'Есть предложение (идея)' },
-    { to: '/dashboard/teams', icon: Users, label: 'Для команд' },
-  ]
 
   const isActive = (path: string, exact?: boolean) => {
     if (exact) return location.pathname === path
@@ -36,7 +37,7 @@ function Sidebar() {
   }
 
   return (
-    <aside className="w-[240px] shrink-0">
+    <aside className="hidden lg:block w-[240px] shrink-0">
       <nav className="sticky top-24">
         <div className="space-y-1">
           {mainLinks.map(link => (
@@ -45,8 +46,8 @@ function Sidebar() {
               to={link.to}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                 isActive(link.to, link.exact)
-                  ? 'bg-gray-100 text-gray-900 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-medium'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
               <link.icon className="w-5 h-5" />
@@ -55,7 +56,7 @@ function Sidebar() {
           ))}
         </div>
         
-        <div className="my-4 border-t border-gray-200" />
+        <div className="my-4 border-t border-gray-200 dark:border-gray-700" />
         
         <div className="space-y-1">
           {secondaryLinks.map(link => (
@@ -64,8 +65,8 @@ function Sidebar() {
               to={link.to}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                 isActive(link.to)
-                  ? 'bg-gray-100 text-gray-900 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-medium'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
               <link.icon className="w-5 h-5" />
@@ -78,16 +79,95 @@ function Sidebar() {
   )
 }
 
+// Mobile Bottom Navigation
+function MobileNav() {
+  const location = useLocation()
+  const [showMore, setShowMore] = useState(false)
+
+  const isActive = (path: string, exact?: boolean) => {
+    if (exact) return location.pathname === path
+    return location.pathname.startsWith(path)
+  }
+
+  // Show only 5 main items in bottom nav
+  const bottomLinks = mainLinks.slice(0, 5)
+
+  return (
+    <>
+      {/* Mobile bottom navigation bar */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 z-50 safe-area-bottom">
+        <div className="flex justify-around items-center h-16">
+          {bottomLinks.map(link => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className={`flex flex-col items-center justify-center flex-1 h-full py-1 ${
+                isActive(link.to, link.exact)
+                  ? 'text-blue-600 dark:text-blue-400'
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}
+            >
+              <link.icon className="w-5 h-5" />
+              <span className="text-[10px] mt-1 truncate max-w-[60px]">{link.label.split(' ')[0]}</span>
+            </Link>
+          ))}
+          <button
+            onClick={() => setShowMore(true)}
+            className="flex flex-col items-center justify-center flex-1 h-full py-1 text-gray-500 dark:text-gray-400"
+          >
+            <Menu className="w-5 h-5" />
+            <span className="text-[10px] mt-1">Ещё</span>
+          </button>
+        </div>
+      </nav>
+
+      {/* Mobile menu overlay */}
+      {showMore && (
+        <div className="lg:hidden fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowMore(false)} />
+          <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-900 rounded-t-2xl max-h-[70vh] overflow-y-auto safe-area-bottom animate-slide-up">
+            <div className="p-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Меню</h3>
+                <button onClick={() => setShowMore(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+              <div className="space-y-1">
+                {[...mainLinks, ...secondaryLinks].map(link => (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    onClick={() => setShowMore(false)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base ${
+                      isActive(link.to, link.exact)
+                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    <link.icon className="w-5 h-5" />
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
 // Dashboard Home Content
 export function DashboardHome() {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
       {/* Main Content */}
       <div className="lg:col-span-3">
         {/* Getting Started */}
-        <section className="mb-12">
-          <h2 className="text-xl font-medium text-gray-900 mb-6">С чего начать</h2>
-          <div className="grid md:grid-cols-2 gap-4">
+        <section className="mb-8 lg:mb-12">
+          <h2 className="text-lg lg:text-xl font-medium text-gray-900 dark:text-white mb-4 lg:mb-6">С чего начать</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link to="/courses" className="border border-gray-200 rounded-xl p-6 hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer block">
             <div className="h-32 flex items-center justify-center mb-4">
               <img 
@@ -1499,15 +1579,16 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-[1200px] mx-auto px-6 py-8">
-        <div className="flex gap-12">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
+      <div className="max-w-[1200px] mx-auto px-4 lg:px-6 py-4 lg:py-8 pb-20 lg:pb-8">
+        <div className="flex gap-6 lg:gap-12">
           <Sidebar />
           <main className="flex-1 min-w-0">
             <Outlet />
           </main>
         </div>
       </div>
+      <MobileNav />
     </div>
   )
 }
