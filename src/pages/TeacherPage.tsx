@@ -3,24 +3,11 @@ import { Link, Routes, Route, useLocation, Navigate, useParams, useNavigate } fr
 import { 
   LayoutDashboard, Users, BookOpen, FileCheck, MessageCircle,
   Plus, Clock, CheckCircle, XCircle, ChevronRight, Send, ArrowLeft,
-  Edit, Save, AlertCircle, Paperclip, Lock, Image as ImageIcon, FileText, Loader2, X
+  Edit, Save, AlertCircle, Paperclip, Image as ImageIcon, FileText, Loader2, X
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { teacherAPI, submissionsAPI, chatAPI, coursesAPI, createWebSocket } from '../api'
 import type { TeacherStats, Course, Student, Submission, Chat, Message, StudentDetails } from '../api'
-import {
-  generateKeyPair,
-  exportPublicKey,
-  exportPrivateKey,
-  encryptMessage,
-  decryptMessage,
-  storePrivateKey,
-  getStoredPrivateKey,
-  storePublicKey,
-  getStoredPublicKey,
-  storeRecipientPublicKey,
-  getRecipientPublicKey,
-} from '../utils/e2ee'
 
 // Teacher Sidebar
 function TeacherSidebar() {
@@ -1029,95 +1016,10 @@ function ChatRoomPage() {
   const [chatInfo, setChatInfo] = useState<Chat | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
-  const [e2eeEnabled, setE2eeEnabled] = useState(false)
-  const [e2eeInitialized, setE2eeInitialized] = useState(false)
-  const [decryptionErrors, setDecryptionErrors] = useState<Set<string>>(new Set())
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const wsRef = useRef<WebSocket | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Initialize E2EE
-  useEffect(() => {
-    if (user?.id) {
-      initializeE2EE()
-    }
-  }, [user?.id])
-
-  const initializeE2EE = async () => {
-    if (!user?.id) {
-      console.log('[Teacher initializeE2EE] No user ID, skipping')
-      return
-    }
-    console.log('[Teacher initializeE2EE] Starting E2EE initialization for user:', user.id)
-    try {
-      // Check localStorage first
-      let privateKeyStr = getStoredPrivateKey(user.id)
-      let publicKeyStr = getStoredPublicKey(user.id)
-      console.log('[Teacher initializeE2EE] Keys in localStorage - private:', !!privateKeyStr, 'public:', !!publicKeyStr)
-      
-      // If keys exist locally, use them
-      if (privateKeyStr && publicKeyStr) {
-        console.log('[Teacher initializeE2EE] Keys found in localStorage, using them')
-        setE2eeInitialized(true)
-        console.log('[Teacher initializeE2EE] E2EE initialized with existing keys')
-        return
-      }
-      
-      // No keys locally - check server
-      console.log('[Teacher initializeE2EE] No keys in localStorage, checking server')
-      try {
-        const serverKeys = await chatAPI.getMyKeys()
-        
-        if (serverKeys.public_key && serverKeys.private_key) {
-          console.log('[Teacher initializeE2EE] Found keys on server!')
-          
-          privateKeyStr = serverKeys.private_key
-          publicKeyStr = serverKeys.public_key
-          
-          // Store keys locally
-          storePrivateKey(user.id, privateKeyStr)
-          storePublicKey(user.id, publicKeyStr)
-          console.log('[Teacher initializeE2EE] Keys loaded from server and stored locally')
-          
-          setE2eeInitialized(true)
-          console.log('[Teacher initializeE2EE] E2EE initialized with server keys')
-          return
-        } else {
-          console.log('[Teacher initializeE2EE] No keys on server')
-        }
-      } catch (error) {
-        console.log('[Teacher initializeE2EE] No keys on server')
-      }
-      
-      // Generate new keys
-      if (!privateKeyStr || !publicKeyStr) {
-        console.log('[Teacher initializeE2EE] Generating new key pair')
-        
-        const keyPair = await generateKeyPair()
-        privateKeyStr = await exportPrivateKey(keyPair.privateKey)
-        publicKeyStr = await exportPublicKey(keyPair.publicKey)
-        console.log('[Teacher initializeE2EE] Key pair generated')
-        
-        // Store keys locally
-        storePrivateKey(user.id, privateKeyStr)
-        storePublicKey(user.id, publicKeyStr)
-        console.log('[Teacher initializeE2EE] Keys stored in localStorage')
-        
-        // Upload keys to server
-        try {
-          await chatAPI.savePublicKey(publicKeyStr, privateKeyStr)
-          console.log('[Teacher initializeE2EE] Keys uploaded to server')
-        } catch (error) {
-          console.error('[Teacher initializeE2EE] Failed to upload keys:', error)
-        }
-      }
-      
-      setE2eeInitialized(true)
-      console.log('[Teacher initializeE2EE] E2EE initialization complete')
-    } catch (error) {
-      console.error('[Teacher initializeE2EE] Failed to initialize E2EE:', error)
-    }
-  }
 
   // WebSocket connection
   useEffect(() => {
@@ -1165,143 +1067,6 @@ function ChatRoomPage() {
         
         if (data.type === 'new_message') {
           const message = data.message
-          
-          // Decrypt message if encrypted (but not if it's our own message)
-          if (message.is_encrypted && message.encrypted_content && user?.id && message.sender_id !== user.id) {
-            console.log('[Teacher WebSocket] Decrypting new message', message.id, 'from sender', message.sender_id, 'my id:', user.id)
-            try {
-              const privateKeyStr = getStoredPrivateKey(user.id)
-              if (privateKeyStr) {
-                console.log('[Teacher WebSocket] Private key found, length:', privateKeyStr.length)
-                // Check if public key matches private key
-                const myPublicKey = getStoredPublicKey(user.id)
-                if (myPublicKey) {
-                  console.log('[Teacher WebSocket] My public key (first 50 chars):', myPublicKey.substring(0, 50))
-                  // Try to get public key from server to compare
-                  try {
-                    const serverKeyData = await chatAPI.getUserPublicKey(user.id)
-                    if (serverKeyData.public_key) {
-                      console.log('[Teacher WebSocket] Server public key for me (first 50 chars):', serverKeyData.public_key.substring(0, 50))
-                      if (serverKeyData.public_key !== myPublicKey) {
-                        console.error('[Teacher WebSocket] WARNING: My public key in localStorage does not match server public key!')
-                        console.error('[Teacher WebSocket] localStorage key (first 50):', myPublicKey.substring(0, 50))
-                        console.error('[Teacher WebSocket] Server key (first 50):', serverKeyData.public_key.substring(0, 50))
-                      }
-                    }
-                  } catch (e) {
-                    console.log('[Teacher WebSocket] Could not fetch my public key from server for comparison')
-                  }
-                }
-                let encryptedData: any
-                if (typeof message.encrypted_content === 'string') {
-                  try {
-                    encryptedData = JSON.parse(message.encrypted_content)
-                    console.log('[Teacher WebSocket] Parsed encrypted_content as JSON, has encrypted:', !!encryptedData.encrypted, 'has iv:', !!encryptedData.iv)
-                  } catch (e) {
-                    console.log('[Teacher WebSocket] Failed to parse as JSON, using legacy format')
-                    // If parsing fails, treat it as a direct base64 string (legacy format)
-                    encryptedData = { encrypted: message.encrypted_content, iv: message.iv || '' }
-                  }
-                } else {
-                  encryptedData = message.encrypted_content
-                  console.log('[Teacher WebSocket] encrypted_content is not a string, type:', typeof message.encrypted_content)
-                }
-                
-                if (!encryptedData.encrypted) {
-                  console.error('[Teacher WebSocket] No encrypted data in message', message.id)
-                  message.content = '[Не удалось расшифровать сообщение]'
-                  setDecryptionErrors(prev => new Set(prev).add(message.id))
-                  return
-                }
-                
-                // Verify key pair before decryption
-                let shouldRegenerateKeys = false
-                if (myPublicKey) {
-                  try {
-                    const { verifyKeyPair } = await import('../utils/e2ee')
-                    const isValid = await verifyKeyPair(myPublicKey, privateKeyStr)
-                    if (!isValid) {
-                      console.error('[Teacher WebSocket] WARNING: Private key does not match public key! Will regenerate keys.')
-                      shouldRegenerateKeys = true
-                    }
-                  } catch (e) {
-                    console.error('[Teacher WebSocket] Failed to verify key pair:', e)
-                    // If verification fails, try to decrypt anyway - might be a temporary issue
-                  }
-                }
-                
-                console.log('[Teacher WebSocket] Calling decryptMessage for message', message.id, 'encrypted length:', encryptedData.encrypted.length)
-                try {
-                  const decrypted = await decryptMessage(
-                    encryptedData,
-                    privateKeyStr
-                  )
-                  console.log('[Teacher WebSocket] Successfully decrypted message', message.id, 'decrypted length:', decrypted.length)
-                  message.content = decrypted
-                } catch (decryptError: any) {
-                  const errorMsg = decryptError instanceof Error ? decryptError.message : String(decryptError)
-                  console.error('[Teacher WebSocket] Decryption failed:', errorMsg)
-                  
-                  // If decryption fails due to key mismatch, regenerate keys
-                  if (errorMsg.includes('does not match') || errorMsg.includes('DataError') || shouldRegenerateKeys) {
-                    console.log('[Teacher WebSocket] Regenerating keys due to mismatch...')
-                    try {
-                      const keyPair = await generateKeyPair()
-                      const newPrivateKey = await exportPrivateKey(keyPair.privateKey)
-                      const newPublicKey = await exportPublicKey(keyPair.publicKey)
-                      
-                      storePrivateKey(user.id, newPrivateKey)
-                      storePublicKey(user.id, newPublicKey)
-                      
-                      // Upload new keys to server
-                      await chatAPI.savePublicKey(newPublicKey, newPrivateKey)
-                      console.log('[Teacher WebSocket] Keys regenerated and uploaded to server')
-                      
-                      // Try to decrypt again with new keys (won't work for old messages, but will work for new ones)
-                      message.content = '[Не удалось расшифровать сообщение: ключи были перегенерированы. Старые сообщения не могут быть расшифрованы.]'
-                    } catch (regenError) {
-                      console.error('[Teacher WebSocket] Failed to regenerate keys:', regenError)
-                      message.content = '[Не удалось расшифровать сообщение: ошибка ключей]'
-                    }
-                  } else {
-                    message.content = '[Не удалось расшифровать сообщение]'
-                  }
-                  setDecryptionErrors(prev => new Set(prev).add(message.id))
-                }
-              } else {
-                console.error('[Teacher WebSocket] No private key found for user', user.id)
-                message.content = '[Не удалось расшифровать сообщение: отсутствует приватный ключ]'
-                setDecryptionErrors(prev => new Set(prev).add(message.id))
-              }
-            } catch (error) {
-              const errorMessage = error instanceof Error ? error.message : String(error)
-              console.error('[Teacher WebSocket] Failed to decrypt message', message.id, 'error:', errorMessage, 'full error:', error)
-              
-              // Check if it's a key mismatch error
-              if (errorMessage.includes('different public key') || errorMessage.includes('decrypt AES key')) {
-                message.content = '[Сообщение было зашифровано другим ключом. Возможно, ключи были перегенерированы после отправки сообщения.]'
-              } else {
-                message.content = '[Не удалось расшифровать сообщение]'
-              }
-              setDecryptionErrors(prev => new Set(prev).add(message.id))
-            }
-          } else if (message.is_encrypted && message.sender_id === user?.id) {
-            // Our own encrypted message - check if we already have it with original content
-            setMessages(prev => {
-              const existingMessage = prev.find(m => m.id === message.id)
-              if (existingMessage && existingMessage.content && !existingMessage.content.includes('зашифрованное')) {
-                // Use existing message with original content
-                return prev
-              }
-              // If no original content, show placeholder
-              if (!message.content) {
-                message.content = '[Ваше зашифрованное сообщение]'
-              }
-              return prev
-            })
-          } else if (message.is_encrypted && !message.encrypted_content) {
-            setDecryptionErrors(prev => new Set(prev).add(message.id))
-          }
 
           if (message.chat_id === chatId) {
             setMessages(prev => {
@@ -1331,154 +1096,22 @@ function ChatRoomPage() {
   }, [token, chatId, user?.id])
 
   // Exchange public keys
-  const exchangePublicKeys = async (chat: Chat) => {
-    if (!user?.id || !e2eeInitialized) {
-      setE2eeEnabled(false)
-      return
-    }
-
-    const otherParticipant = chat.participants.find(p => p.id !== user?.id)
-    if (!otherParticipant) {
-      setE2eeEnabled(false)
-      return
-    }
-
-    try {
-      // ALWAYS fetch from server - don't trust cache
-      console.log('[Teacher exchangePublicKeys] Fetching recipient public key from server for:', otherParticipant.id)
-      try {
-        const keyData = await chatAPI.getUserPublicKey(otherParticipant.id)
-        if (keyData.public_key) {
-          const recipientKey = keyData.public_key
-          console.log('[Teacher exchangePublicKeys] Received recipient public key from server, length:', recipientKey.length, 'first 50 chars:', recipientKey.substring(0, 50))
-          
-          // Check cache
-          const cachedKey = getRecipientPublicKey(otherParticipant.id)
-          if (cachedKey && cachedKey !== recipientKey) {
-            console.warn('[Teacher exchangePublicKeys] ⚠️ WARNING: Cached key differs from server! Updating.')
-            console.warn('[Teacher exchangePublicKeys] Cached key (first 50):', cachedKey.substring(0, 50))
-            console.warn('[Teacher exchangePublicKeys] Server key (first 50):', recipientKey.substring(0, 50))
-          } else if (cachedKey) {
-            console.log('[Teacher exchangePublicKeys] Cache matches server')
-          }
-          
-          // Always update cache with server key
-          storeRecipientPublicKey(otherParticipant.id, recipientKey)
-          console.log('[Teacher exchangePublicKeys] Recipient public key stored')
-          
-          // Also verify: if recipient is trying to decrypt messages from me, check if my public key matches
-          const myPublicKey = getStoredPublicKey(user.id)
-          if (myPublicKey) {
-            console.log('[Teacher exchangePublicKeys] My public key (first 50 chars):', myPublicKey.substring(0, 50))
-            console.log('[Teacher exchangePublicKeys] Recipient will use this key to encrypt messages to me')
-          }
-        } else {
-          console.warn('[Teacher exchangePublicKeys] Recipient public key not found in response')
-        }
-      } catch (error) {
-        console.error('[Teacher exchangePublicKeys] Failed to fetch recipient public key:', error)
-        // Disable E2EE if key fetch failed
-        setE2eeEnabled(false)
-        return
-      }
-
-      // Enable E2EE if initialization is complete
-      setE2eeEnabled(e2eeInitialized)
-    } catch (error) {
-      console.error('Failed to exchange keys:', error)
-      // Disable E2EE if key exchange failed
-      setE2eeEnabled(false)
-    }
-  }
-
   useEffect(() => {
     if (chatId) {
       loadChat()
     }
-  }, [chatId, e2eeInitialized])
+  }, [chatId])
 
   const loadChat = async () => {
-    if (!chatId || !user?.id) return
+    if (!chatId) return
     
     try {
-      // Get chat info
       const chats = await chatAPI.getChats()
       const chat = chats.find(c => c.id === chatId)
       setChatInfo(chat || null)
       
-      // Exchange public keys first (wait for it to complete)
-      if (chat) {
-        console.log('[Teacher loadChat] Exchanging public keys for chat:', chatId)
-        await exchangePublicKeys(chat)
-      }
-      
-      // Get messages
       const msgs = await chatAPI.getMessages(chatId)
-      console.log('[Teacher loadChat] Loaded', msgs.length, 'messages')
-      
-      // Decrypt messages if E2EE is enabled
-      const privateKeyStr = getStoredPrivateKey(user.id)
-      console.log('[Teacher loadChat] E2EE initialized:', e2eeInitialized, 'Private key exists:', !!privateKeyStr)
-      if (privateKeyStr && e2eeInitialized) {
-        console.log('[Teacher loadChat] Private key found, starting decryption')
-        const decryptedMessages = await Promise.all(
-          msgs.map(async (msg) => {
-            // Don't try to decrypt our own messages - they were encrypted for recipient
-            if (msg.is_encrypted && msg.encrypted_content && msg.sender_id !== user.id) {
-              console.log('[Teacher loadChat] Decrypting message', msg.id, 'from sender', msg.sender_id, 'my id:', user.id)
-              try {
-                let encryptedData: any
-                if (typeof msg.encrypted_content === 'string') {
-                  try {
-                    encryptedData = JSON.parse(msg.encrypted_content)
-                    console.log('[Teacher loadChat] Parsed encrypted_content as JSON, has encrypted:', !!encryptedData.encrypted, 'has iv:', !!encryptedData.iv)
-              } catch (e) {
-                console.log('[Teacher loadChat] Failed to parse as JSON, using legacy format')
-                // If parsing fails, treat it as a direct base64 string (legacy format)
-                encryptedData = { encrypted: msg.encrypted_content, iv: msg.iv || '' }
-              }
-            } else {
-              encryptedData = msg.encrypted_content
-              console.log('[Teacher loadChat] encrypted_content is not a string, type:', typeof msg.encrypted_content)
-            }
-            
-            if (!encryptedData.encrypted) {
-              console.error('[Teacher loadChat] No encrypted data in message', msg.id)
-              setDecryptionErrors(prev => new Set(prev).add(msg.id))
-              return { ...msg, content: '[Не удалось расшифровать сообщение]' }
-            }
-            
-            console.log('[Teacher loadChat] Calling decryptMessage for message', msg.id, 'encrypted length:', encryptedData.encrypted.length)
-            const decrypted = await decryptMessage(
-              encryptedData,
-              privateKeyStr
-            )
-            console.log('[Teacher loadChat] Successfully decrypted message', msg.id, 'decrypted length:', decrypted.length)
-            return { ...msg, content: decrypted }
-          } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error)
-            console.error('[Teacher loadChat] Failed to decrypt message', msg.id, 'error:', errorMessage, 'full error:', error)
-                
-                // Check if it's a key mismatch error
-                let errorContent = '[Не удалось расшифровать сообщение]'
-                if (errorMessage.includes('different public key') || errorMessage.includes('decrypt AES key')) {
-                  errorContent = '[Сообщение было зашифровано другим ключом. Возможно, ключи были перегенерированы после отправки сообщения.]'
-                }
-                
-                setDecryptionErrors(prev => new Set(prev).add(msg.id))
-                return { ...msg, content: errorContent }
-              }
-            } else if (msg.is_encrypted && msg.sender_id === user.id) {
-              // Our own encrypted message - keep original content if available
-              return { ...msg, content: msg.content || '[Ваше зашифрованное сообщение]' }
-            }
-            return msg
-          })
-        )
-        setMessages(decryptedMessages)
-      } else {
-        setMessages(msgs)
-      }
+      setMessages(msgs)
     } catch (error) {
       console.error('Failed to load chat:', error)
     } finally {
@@ -1526,59 +1159,13 @@ function ChatRoomPage() {
   }
 
   const handleSend = async () => {
-    if ((!newMessage.trim() && !selectedFile) || !chatId || sending || !user?.id) return
+    if ((!newMessage.trim() && !selectedFile) || !chatId || sending) return
     
     setSending(true)
     try {
-      let content = newMessage.trim()
-      let encryptedContent: string | undefined
-      let isEncrypted = false
-
-      // Always try to encrypt if E2EE is initialized and we have content
-      if (e2eeInitialized && content && chatInfo) {
-        const otherParticipant = chatInfo.participants.find(p => p.id !== user.id)
-        if (otherParticipant) {
-          console.log('[Teacher handleSend] Encrypting message for recipient:', otherParticipant.id, 'recipient name:', otherParticipant.name, 'my id:', user.id)
-          // Use cached key only - it was loaded once in loadChat/exchangePublicKeys
-          const recipientKeyStr = getRecipientPublicKey(otherParticipant.id)
-          console.log('[Teacher handleSend] Recipient public key from cache:', !!recipientKeyStr, recipientKeyStr ? 'length: ' + recipientKeyStr.length + ', first 50 chars: ' + recipientKeyStr.substring(0, 50) : 'not found')
-          
-          // Encrypt if we have recipient's key
-          if (recipientKeyStr) {
-            try {
-              // Verify we're not using our own key
-              const myPublicKey = getStoredPublicKey(user.id)
-              if (myPublicKey && recipientKeyStr === myPublicKey) {
-                console.error('[Teacher handleSend] ERROR: Trying to encrypt with own public key!')
-                throw new Error('Cannot encrypt with own public key')
-              }
-              
-              console.log('[Teacher handleSend] Encrypting message with recipient public key')
-              console.log('[Teacher handleSend] Using recipient public key (first 50 chars):', recipientKeyStr.substring(0, 50))
-              const encrypted = await encryptMessage(content, recipientKeyStr)
-              encryptedContent = JSON.stringify(encrypted)
-              isEncrypted = true
-              console.log('[Teacher handleSend] Message encrypted successfully, encrypted_content length:', encryptedContent.length)
-              // Keep original content for sender to see their own message
-              // Don't clear content - we'll send it but server will use encrypted_content for recipient
-            } catch (error) {
-              console.error('[Teacher handleSend] Encryption failed:', error)
-              // Fall back to unencrypted if encryption fails
-            }
-          } else {
-            console.warn('[Teacher handleSend] Recipient public key not found, sending unencrypted')
-          }
-        }
-      }
-
-      const message = await chatAPI.sendMessage(chatId, content, 'text', {
-        encrypted_content: encryptedContent,
-        is_encrypted: isEncrypted,
-      })
-      // For our own encrypted messages, keep the original content so we can see what we sent
-      if (isEncrypted && message.sender_id === user.id) {
-        message.content = content
-      }
+      const content = newMessage.trim()
+      const messageType = newMessage.includes('```') ? 'code' : 'text'
+      const message = await chatAPI.sendMessage(chatId, content, messageType)
       setMessages([...messages, message])
       setNewMessage('')
       scrollToBottom()
@@ -1630,16 +1217,8 @@ function ChatRoomPage() {
           className="w-10 h-10 rounded-full" 
         />
         <div className="flex-1">
-          <div className="font-medium flex items-center gap-2">
+          <div className="font-medium">
             {otherParticipant?.name || 'Пользователь'}
-            {e2eeEnabled && (
-              <div className="relative group">
-                <Lock className="w-4 h-4 text-green-600" />
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                  End-to-end шифрование включено
-                </div>
-              </div>
-            )}
           </div>
           <div className="text-sm text-gray-500">Студент</div>
         </div>
@@ -1697,22 +1276,12 @@ function ChatRoomPage() {
                       </div>
                     ) : message.message_type === 'code' ? (
                       <pre className={`text-sm font-mono whitespace-pre-wrap ${isOwn ? 'bg-purple-700' : 'bg-gray-200'} rounded p-2`}>
-                        {decryptionErrors.has(message.id) 
-                          ? '[Ошибка расшифровки]' 
-                          : (message.content || (message.is_encrypted ? '[Зашифрованное сообщение]' : ''))}
+                        {message.content || ''}
                       </pre>
                     ) : (
                       <p className="whitespace-pre-wrap">
-                        {decryptionErrors.has(message.id) 
-                          ? '[Не удалось расшифровать сообщение]' 
-                          : (message.content || (message.is_encrypted ? '[Зашифрованное сообщение]' : ''))}
+                        {message.content || ''}
                       </p>
-                    )}
-                    {message.is_encrypted && !decryptionErrors.has(message.id) && (
-                      <div className="flex items-center gap-1 mt-1 text-xs opacity-75">
-                        <Lock className="w-3 h-3" />
-                        <span>Зашифровано</span>
-                      </div>
                     )}
                   </div>
                   <div className={`text-xs text-gray-400 mt-1 ${isOwn ? 'text-right' : ''}`}>

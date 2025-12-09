@@ -1,22 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { Send, Paperclip, ArrowLeft, Code, MoreVertical, Lock, Image as ImageIcon, FileText, X, Loader2 } from 'lucide-react'
+import { Send, Paperclip, ArrowLeft, Code, MoreVertical, Image as ImageIcon, FileText, X, Loader2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { chatAPI, createWebSocket } from '../api'
 import type { Message, Chat } from '../api'
-import {
-  generateKeyPair,
-  exportPublicKey,
-  exportPrivateKey,
-  encryptMessage,
-  decryptMessage,
-  storePrivateKey,
-  getStoredPrivateKey,
-  storePublicKey,
-  getStoredPublicKey,
-  storeRecipientPublicKey,
-  getRecipientPublicKey,
-} from '../utils/e2ee'
 
 interface ChatPageProps {
   backLink?: string
@@ -31,134 +18,10 @@ export default function ChatPage({ backLink = '/dashboard' }: ChatPageProps) {
   const [activeChat, setActiveChat] = useState<Chat | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
-  const [e2eeEnabled, setE2eeEnabled] = useState(false)
-  const [e2eeInitialized, setE2eeInitialized] = useState(false)
-  const [decryptionErrors, setDecryptionErrors] = useState<Set<string>>(new Set())
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const wsRef = useRef<WebSocket | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Initialize E2EE for current user
-  useEffect(() => {
-    if (user?.id) {
-      initializeE2EE()
-    }
-  }, [user?.id])
-
-  // Initialize E2EE keys
-  const initializeE2EE = async () => {
-    if (!user?.id) return
-
-    try {
-      // Check localStorage first
-      let privateKeyStr = getStoredPrivateKey(user.id)
-      let publicKeyStr = getStoredPublicKey(user.id)
-
-      if (privateKeyStr && publicKeyStr) {
-        console.log('[Chat initializeE2EE] Keys found in localStorage')
-        setE2eeInitialized(true)
-        return
-      }
-
-      // No keys locally - check server
-      console.log('[Chat initializeE2EE] No keys in localStorage, checking server')
-      try {
-        const serverKeys = await chatAPI.getMyKeys()
-        
-        if (serverKeys.public_key && serverKeys.private_key) {
-          console.log('[Chat initializeE2EE] Found keys on server!')
-          
-          privateKeyStr = serverKeys.private_key
-          publicKeyStr = serverKeys.public_key
-          
-          storePrivateKey(user.id, privateKeyStr)
-          storePublicKey(user.id, publicKeyStr)
-          console.log('[Chat initializeE2EE] Keys loaded from server and stored locally')
-          
-          setE2eeInitialized(true)
-          return
-        }
-      } catch (error) {
-        console.log('[Chat initializeE2EE] No keys on server')
-      }
-      
-      // Generate new keys
-      if (!privateKeyStr || !publicKeyStr) {
-        console.log('[Chat initializeE2EE] Generating new key pair')
-        
-        const keyPair = await generateKeyPair()
-        privateKeyStr = await exportPrivateKey(keyPair.privateKey)
-        publicKeyStr = await exportPublicKey(keyPair.publicKey)
-        
-        storePrivateKey(user.id, privateKeyStr)
-        storePublicKey(user.id, publicKeyStr)
-        
-        try {
-          await chatAPI.savePublicKey(publicKeyStr, privateKeyStr)
-          console.log('[Chat initializeE2EE] Keys uploaded to server')
-        } catch (error) {
-          console.error('[Chat initializeE2EE] Failed to upload keys:', error)
-        }
-      }
-
-      setE2eeInitialized(true)
-    } catch (error) {
-      console.error('[Chat initializeE2EE] Failed to initialize E2EE:', error)
-    }
-  }
-
-  // Exchange public keys with chat participant
-  const exchangePublicKeys = async (chat: Chat) => {
-    if (!user?.id || !e2eeInitialized) {
-      setE2eeEnabled(false)
-      return
-    }
-
-    const otherParticipant = chat.participants.find(p => p.id !== user?.id)
-    if (!otherParticipant) {
-      setE2eeEnabled(false)
-      return
-    }
-
-    try {
-      // Check if we already have recipient's public key locally
-      let recipientKey = getRecipientPublicKey(otherParticipant.id)
-      
-      if (!recipientKey) {
-        // Fetch recipient's public key from server
-        try {
-          const keyData = await chatAPI.getUserPublicKey(otherParticipant.id)
-          if (keyData.public_key) {
-            recipientKey = keyData.public_key
-            // Store locally for faster access
-            storeRecipientPublicKey(otherParticipant.id, keyData.public_key)
-          } else {
-            // Key not found on server - E2EE cannot be enabled
-            console.warn('Recipient public key not found on server')
-            setE2eeEnabled(false)
-            return
-          }
-        } catch (error: any) {
-          // If 404, key doesn't exist yet - E2EE cannot be enabled
-          if (error?.status === 404 || error?.response?.status === 404) {
-            console.warn('Recipient public key not found, user may not have initialized E2EE yet')
-          } else {
-            console.error('Failed to fetch recipient public key:', error)
-          }
-          // Disable E2EE if we don't have recipient's key
-          setE2eeEnabled(false)
-          return
-        }
-      }
-
-      // Enable E2EE only if we have recipient's key
-      setE2eeEnabled(!!recipientKey)
-    } catch (error) {
-      console.error('Failed to exchange keys:', error)
-      // Disable E2EE if key exchange failed
-      setE2eeEnabled(false)
-    }
-  }
 
   // Load chats
   useEffect(() => {
@@ -200,67 +63,22 @@ export default function ChatPage({ backLink = '/dashboard' }: ChatPageProps) {
         
         if (data.type === 'new_message') {
           const message = data.message
-          console.log('New message received for chat:', message.chat_id, 'Current chatId:', chatId)
-          
-          // Decrypt message if encrypted (but not if it's our own message - we sent it unencrypted to ourselves)
-          if (message.is_encrypted && message.encrypted_content && user?.id && message.sender_id !== user.id) {
-            try {
-              const privateKeyStr = getStoredPrivateKey(user.id)
-              if (privateKeyStr) {
-                // Parse encrypted content if it's a JSON string
-                const encryptedData = typeof message.encrypted_content === 'string' && message.encrypted_content.startsWith('{')
-                  ? JSON.parse(message.encrypted_content)
-                  : message.encrypted_content
-                
-                const encryptedContent = typeof encryptedData === 'object' && encryptedData.encrypted
-                  ? encryptedData.encrypted
-                  : encryptedData
-                
-                const decrypted = await decryptMessage(encryptedContent, privateKeyStr)
-                message.content = decrypted
-                console.log('✅ Message decrypted successfully')
-              } else {
-                console.warn('⚠️ No private key found for decryption')
-                setDecryptionErrors(prev => new Set(prev).add(message.id))
-              }
-            } catch (error) {
-              console.error('❌ Failed to decrypt message:', error)
-              setDecryptionErrors(prev => new Set(prev).add(message.id))
-            }
-          } else if (message.is_encrypted && message.sender_id === user?.id) {
-            // Our own encrypted message - it was encrypted for recipient, we can't decrypt it
-            // But we should have the original content stored, or send it unencrypted to ourselves
-            console.log('ℹ️ Own encrypted message - keeping original content or showing placeholder')
-            if (!message.content) {
-              message.content = '[Ваше зашифрованное сообщение]'
-            }
-          } else if (message.is_encrypted && !message.encrypted_content) {
-            console.warn('⚠️ Message marked as encrypted but no encrypted_content found')
-            setDecryptionErrors(prev => new Set(prev).add(message.id))
-          } else if (!message.is_encrypted) {
-            console.log('ℹ️ Message is not encrypted, content:', message.content)
-          }
 
           if (message.chat_id === chatId) {
-            console.log('📨 Adding message to current chat, content:', message.content, 'is_encrypted:', message.is_encrypted, 'hasDecryptionError:', decryptionErrors.has(message.id))
             setMessages(prev => {
               // Check if message already exists to avoid duplicates
               if (prev.some(m => m.id === message.id)) {
-                console.log('⚠️ Message already exists, skipping')
                 return prev
               }
-              console.log('✅ Adding new message to state, final content:', message.content)
               return [...prev, message]
             })
             scrollToBottom()
-          } else {
-            console.log('ℹ️ Message is for different chat, updating chat list')
           }
           
           // Update chat list
           setChats(prev => prev.map(chat => 
             chat.id === message.chat_id 
-              ? { ...chat, last_message: message.content || '[Зашифрованное сообщение]', unread_count: chat.unread_count + 1 }
+              ? { ...chat, last_message: message.content || '', unread_count: chat.unread_count + 1 }
               : chat
           ))
         }
@@ -288,54 +106,16 @@ export default function ChatPage({ backLink = '/dashboard' }: ChatPageProps) {
       const chat = chats.find(c => c.id === chatId)
       if (chat) {
         setActiveChat(chat)
-        exchangePublicKeys(chat)
       }
     }
   }, [chatId, chats])
 
   const loadMessages = async () => {
-    if (!chatId || !user?.id) return
+    if (!chatId) return
 
     try {
       const msgs = await chatAPI.getMessages(chatId)
-      
-      // Decrypt encrypted messages
-      const privateKeyStr = getStoredPrivateKey(user.id)
-      if (privateKeyStr) {
-        const decryptedMessages = await Promise.all(
-          msgs.map(async (msg) => {
-            // Don't try to decrypt our own messages - they were encrypted for recipient
-            if (msg.is_encrypted && msg.encrypted_content && msg.sender_id !== user.id) {
-              try {
-                // Parse encrypted content if it's a JSON string
-                const encryptedData = typeof msg.encrypted_content === 'string' && msg.encrypted_content.startsWith('{')
-                  ? JSON.parse(msg.encrypted_content)
-                  : msg.encrypted_content
-                
-                const encryptedContent = typeof encryptedData === 'object' && encryptedData.encrypted
-                  ? encryptedData.encrypted
-                  : encryptedData
-                
-                const decrypted = await decryptMessage(encryptedContent, privateKeyStr)
-                return { ...msg, content: decrypted }
-              } catch (error) {
-                console.error('Failed to decrypt message:', error)
-                setDecryptionErrors(prev => new Set(prev).add(msg.id))
-                return { ...msg, content: '[Не удалось расшифровать сообщение]' }
-              }
-            } else if (msg.is_encrypted && msg.sender_id === user.id) {
-              // Our own encrypted message - keep original content if available
-              return { ...msg, content: msg.content || '[Ваше зашифрованное сообщение]' }
-            }
-            return msg
-          })
-        )
-        
-        setMessages(decryptedMessages)
-      } else {
-        setMessages(msgs)
-      }
-      
+      setMessages(msgs)
       scrollToBottom()
     } catch (error) {
       console.error('Failed to load messages:', error)
@@ -385,72 +165,13 @@ export default function ChatPage({ backLink = '/dashboard' }: ChatPageProps) {
   }
 
   const handleSend = async () => {
-    if ((!newMessage.trim() && !selectedFile) || !chatId || !user?.id) return
+    if ((!newMessage.trim() && !selectedFile) || !chatId) return
 
     try {
-      let content = newMessage.trim()
-      let encryptedContent: string | undefined
-      let isEncrypted = false
-
-      // Always try to encrypt if E2EE is initialized and we have content
-      if (e2eeInitialized && content && activeChat) {
-        const otherParticipant = activeChat.participants.find(p => p.id !== user.id)
-        if (otherParticipant) {
-          // Get recipient's public key
-          let recipientKeyStr = getRecipientPublicKey(otherParticipant.id)
-          
-          // If we don't have recipient's key locally, try to fetch it from server
-          if (!recipientKeyStr) {
-            try {
-              const keyData = await chatAPI.getUserPublicKey(otherParticipant.id)
-              if (keyData.public_key) {
-                recipientKeyStr = keyData.public_key
-                storeRecipientPublicKey(otherParticipant.id, recipientKeyStr)
-              } else {
-                // Key not found, user might not have initialized E2EE yet
-                console.warn('Recipient public key not found, sending unencrypted')
-              }
-            } catch (error: any) {
-              // If 404, key doesn't exist yet - that's okay
-              if (error?.status === 404 || error?.response?.status === 404) {
-                console.warn('Recipient public key not found, user may not have initialized E2EE yet')
-              } else {
-                console.warn('Failed to fetch recipient public key, sending unencrypted:', error)
-              }
-            }
-          }
-          
-          // Encrypt if we have recipient's key
-          if (recipientKeyStr) {
-            try {
-              const encrypted = await encryptMessage(content, recipientKeyStr)
-              encryptedContent = JSON.stringify({ encrypted })
-              isEncrypted = true
-              // Keep original content for sender to see their own message
-              // Don't clear content - we'll send it but server will use encrypted_content for recipient
-            } catch (error) {
-              console.error('Encryption failed:', error)
-              // Fall back to unencrypted if encryption fails
-            }
-          } else {
-            // If recipient doesn't have a key yet, send unencrypted but log warning
-            console.warn('Recipient public key not available, sending unencrypted message')
-          }
-        }
-      }
-
+      const content = newMessage.trim()
       const messageType = newMessage.includes('```') ? 'code' : 'text'
       
-      const message = await chatAPI.sendMessage(chatId, content, messageType, {
-        encrypted_content: encryptedContent,
-        is_encrypted: isEncrypted,
-      })
-      
-      // For our own encrypted messages, keep the original content so we can see what we sent
-      if (isEncrypted && message.sender_id === user.id) {
-        message.content = content
-      }
-
+      const message = await chatAPI.sendMessage(chatId, content, messageType)
       setMessages(prev => [...prev, message])
       setNewMessage('')
       scrollToBottom()
@@ -537,16 +258,8 @@ export default function ChatPage({ backLink = '/dashboard' }: ChatPageProps) {
               className="w-10 h-10 rounded-full" 
             />
             <div className="flex-1">
-              <div className="font-medium flex items-center gap-2">
+              <div className="font-medium">
                 {getOtherParticipant(activeChat)?.name}
-                {e2eeEnabled && (
-                  <div className="relative group">
-                    <Lock className="w-4 h-4 text-green-600" />
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                      End-to-end шифрование включено
-                    </div>
-                  </div>
-                )}
               </div>
               <div className="text-sm text-gray-500">
                 {getOtherParticipant(activeChat)?.role === 'teacher' ? 'Преподаватель' : 'Студент'}
@@ -561,7 +274,6 @@ export default function ChatPage({ backLink = '/dashboard' }: ChatPageProps) {
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.map((message) => {
               const isOwn = message.sender_id === user?.id
-              const hasDecryptionError = decryptionErrors.has(message.id)
               
               return (
                 <div
@@ -621,22 +333,12 @@ export default function ChatPage({ backLink = '/dashboard' }: ChatPageProps) {
                           <pre className={`text-sm font-mono whitespace-pre-wrap ${
                             isOwn ? 'bg-blue-700' : 'bg-gray-200'
                           } rounded p-2 mt-1`}>
-                            {hasDecryptionError 
-                              ? '[Ошибка расшифровки]' 
-                              : (message.content || (message.is_encrypted ? '[Зашифрованное сообщение]' : ''))}
+                            {message.content || ''}
                           </pre>
                         ) : (
                           <p className="whitespace-pre-wrap">
-                            {hasDecryptionError 
-                              ? '[Не удалось расшифровать сообщение]' 
-                              : (message.content || (message.is_encrypted ? '[Зашифрованное сообщение]' : ''))}
+                            {message.content || ''}
                           </p>
-                        )}
-                        {message.is_encrypted && !hasDecryptionError && (
-                          <div className="flex items-center gap-1 mt-1 text-xs opacity-75">
-                            <Lock className="w-3 h-3" />
-                            <span>Зашифровано</span>
-                          </div>
                         )}
                       </div>
                       <div className={`text-xs text-gray-400 mt-1 ${isOwn ? 'text-right' : ''}`}>

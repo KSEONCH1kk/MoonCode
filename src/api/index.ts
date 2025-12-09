@@ -138,12 +138,10 @@ export const chatAPI = {
     content: string, 
     messageType = 'text',
     options?: {
-      encrypted_content?: string
       file_url?: string
       file_name?: string
       file_size?: number
       file_mimetype?: string
-      is_encrypted?: boolean
     }
   ) =>
     request<Message>(`/chat/${chatId}/messages`, {
@@ -172,34 +170,6 @@ export const chatAPI = {
   },
 
   getTeachers: () => request<Teacher[]>('/chat/teachers'),
-
-  // E2EE key management
-  savePublicKey: (publicKey: string, privateKey: string) =>
-    request<{ success: boolean; message: string; key_exists: boolean }>('/chat/keys', {
-      method: 'POST',
-      body: JSON.stringify({ 
-        public_key: publicKey,
-        private_key: privateKey
-      }),
-    }),
-
-  getMyKeys: () =>
-    request<{ 
-      public_key: string | null; 
-      private_key: string | null;
-    }>('/chat/keys/me'),
-
-  getUserPublicKey: async (userId: string) => {
-    try {
-      return await request<{ public_key: string | null }>(`/chat/keys/${userId}`)
-    } catch (error: any) {
-      // If 404, key doesn't exist yet - return null instead of throwing
-      if (error?.message?.includes('404') || error?.message?.includes('не найден')) {
-        return { public_key: null }
-      }
-      throw error
-    }
-  },
 
   getChatKeys: (chatId: string) =>
     request<{ keys: Record<string, string> }>(`/chat/${chatId}/keys`),

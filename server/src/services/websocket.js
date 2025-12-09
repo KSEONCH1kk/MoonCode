@@ -53,13 +53,11 @@ export function setupWebSocket(server) {
             const { 
               chatId, 
               content, 
-              encrypted_content,
               messageType = 'text',
               file_url,
               file_name,
               file_size,
-              file_mimetype,
-              is_encrypted = false
+              file_mimetype
             } = message
 
             // Verify user is participant
@@ -76,16 +74,16 @@ export function setupWebSocket(server) {
             const msgId = uuid()
             db.prepare(`
               INSERT INTO messages (
-                id, chat_id, sender_id, content, encrypted_content,
+                id, chat_id, sender_id, content,
                 message_type, file_url, file_name, file_size, file_mimetype, is_encrypted
               )
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).run(
               msgId, chatId, userId, 
-              content || '', encrypted_content || null,
+              content || '',
               messageType, file_url || null, file_name || null,
               file_size || null, file_mimetype || null,
-              is_encrypted ? 1 : 0
+              0
             )
 
             const savedMessage = db.prepare(`
@@ -97,7 +95,7 @@ export function setupWebSocket(server) {
 
             // Convert is_encrypted to boolean
             if (savedMessage) {
-              savedMessage.is_encrypted = savedMessage.is_encrypted === 1
+              savedMessage.is_encrypted = false
             }
 
             // Get all participants
